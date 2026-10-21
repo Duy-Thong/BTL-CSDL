@@ -1,0 +1,101 @@
+% Gói & Cấu hình tài liệu
+\documentclass[en]{IPLeiriaThesis}
+
+% Cấu hình listings để in code học thuật đơn giản, không màu mè
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{longtable}
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\bfseries\color{blue!70!black},
+    commentstyle=\itshape\color{gray!70!black},
+    stringstyle=\color{green!50!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=6pt,
+    backgroundcolor=\color{gray!3},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    rulecolor=\color{gray!30},
+    tabsize=4,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false
+}
+
+\lstdefinestyle{terminal}{
+    basicstyle=\ttfamily\footnotesize,
+    backgroundcolor=\color{gray!5},
+    frame=single,
+    rulecolor=\color{gray!30},
+    numbers=none,
+    breaklines=true
+}
+
+% Tài liệu về các tham số (Tiêu đề đề tài, nhóm tác giả, v.v.)
+\input{Variables/Variables}
+
+% Tạo và Tải Thuật ngữ & Từ viết tắt
+\makeglossaries
+\loadglsentries{Matter/04-Glossary}
+\loadglsentries[\acronymtype]{Matter/05-Acronyms}
+
+\begin{document}
+
+% Nội dung của trang bìa và trang lót
+\include{Matter/00-Cover}
+\include{Matter/01-FPage}
+
+% Đánh số la mã cho phần đầu
+\pagenumbering{roman}
+
+% Lời cảm ơn
+\include{Matter/03-Acknowledgements}
+
+% Phần tóm tắt
+\include{Chapters/00-Abstract}
+
+\renewcommand{\contentsname}{Mục lục}
+\renewcommand{\listfigurename}{Danh sách hình vẽ}
+\renewcommand{\listtablename}{Danh sách bảng biểu}
+
+% Mục lục, hình ảnh và bảng biểu
+\tableofcontents
+\listoffigures
+\listoftables
+
+% Tùy chỉnh các tiêu đề
+\renewcommand{\glossaryname}{Chú giải thuật ngữ}
+\renewcommand{\acronymname}{Danh mục từ viết tắt}
+\renewcommand{\tablename}{Bảng}
+\renewcommand{\bibname}{Tài liệu tham khảo}
+
+% Thuật ngữ và Từ viết tắt
+\printglossary
+\printglossary[type=\acronymtype]
+
+% Đánh số Ả Rập cho phần nội dung chính
+\pagenumbering{arabic}
+
+% Nội dung các chương Báo cáo BTL Các hệ thống CSDL
+\include{Chapters/01-KhaoSatVaER}
+\include{Chapters/02-ChuyenDoiVaBCNF}
+% \include{Chapters/03-CaiDatCSDL}
+% \include{Chapters/04-CSDLPhanTan}
+% \include{Chapters/05-GiaoDienVaThuNghiem}
+
+% Tài liệu tham khảo
+\printbibliography
+
+% Trang bìa sau
+\input{Matter/08-BPage}
+
+\end{document}

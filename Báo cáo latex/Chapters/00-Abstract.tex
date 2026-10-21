@@ -1,0 +1,17 @@
+\thispagestyle{plain}
+
+\ifthenelse{\equal{\getLanguage}{portuguese}}{%
+    \pdfbookmark[1]{Resumo}{resumo}
+    \chapter*{Resumo}
+}{%
+    \pdfbookmark[1]{Abstract}{abstract}
+    \chapter*{Tóm tắt báo cáo}
+}
+
+Báo cáo Bài tập lớn môn \textbf{Các hệ thống Cơ sở dữ liệu} thực hiện nghiên cứu, phân tích và triển khai toàn diện \textbf{Hệ cơ sở dữ liệu quản lý một giải bóng đá chuyên nghiệp} (Đề tài 13). Hệ thống được xây dựng nhằm đáp ứng các yêu cầu nghiệp vụ thực tế của một mùa giải bóng đá: quản lý câu lạc bộ, cầu thủ, sân vận động, đội ngũ trọng tài, hợp đồng thi đấu và cho mượn cầu thủ; thiết lập lịch thi đấu vòng tròn hai lượt ($10$ vòng, $30$ trận); đăng ký đội hình tối đa 18 cầu thủ mỗi trận; theo dõi chi tiết các sự kiện diễn biến trên sân (bàn thắng, thẻ phạt) và tính toán bảng xếp hạng tự động. 
+
+Nội dung báo cáo bao gồm: (1) Phân tích yêu cầu và thiết kế Lược đồ thực thể liên kết chi tiết (E-R); (2) Ánh xạ sang Lược đồ quan hệ và chứng minh giải tích toàn bộ $11$ quan hệ đạt \textbf{Dạng chuẩn BCNF (Boyce-Codd Normal Form)}; (3) Cài đặt CSDL trên hệ quản trị với đầy đủ ràng buộc toàn vẹn, ít nhất $5$ Transaction và $5$ Trigger nghiệp vụ phức tạp; (4) Phân tích và thiết kế \textbf{Cơ sở dữ liệu phân tán (CSDLPT)} theo mô hình đa chi nhánh gồm phân mảnh ngang, phân mảnh dọc, phân mảnh dẫn xuất và nhân bản dữ liệu; (5) Xây dựng ứng dụng giao diện trực quan kết nối CSDL phục vụ tra cứu, cập nhật dữ liệu, tính lương trọng tài và thống kê doanh thu bán vé.
+
+\vspace{1cm}
+
+\noindent\textbf{Từ khóa:} Cơ sở dữ liệu, Lược đồ E-R, Chuẩn hóa BCNF, CSDL Phân tán, Phân mảnh dữ liệu, Quản lý giải bóng đá, Trigger, Transaction.

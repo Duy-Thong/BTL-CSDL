@@ -1,0 +1,273 @@
+# TẬP HỢP SƠ ĐỒ MERMAID CHO HỆ THỐNG CSDL GIẢI BÓNG ĐÁ
+*(Dùng để xem trực tiếp trên GitHub/VS Code Markdown Preview hoặc Import trực tiếp vào Draw.io)*
+
+---
+
+## HƯỚNG DẪN IMPORT VÀO DRAW.IO (3 BƯỚC NHANH CHÓNG)
+1. Mở trang [Draw.io](https://app.diagrams.net/) (hoặc ứng dụng Draw.io Desktop).
+2. Trên thanh menu, chọn: **Arrange** $\rightarrow$ **Insert** $\rightarrow$ **Advanced** $\rightarrow$ **Mermaid** (hoặc tiếng Việt: **Sắp xếp** $\rightarrow$ **Chèn** $\rightarrow$ **Nâng cao** $\rightarrow$ **Mermaid**).
+3. Copy toàn bộ đoạn mã trong khối ` ```mermaid ... ``` ` tương ứng bên dưới và dán vào hộp thoại, sau đó nhấn **Insert**. Draw.io sẽ tự động dựng toàn bộ hình khối, liên kết có thể kéo thả, đổi màu sắc và xuất ảnh (PNG, SVG, PDF) cho báo cáo.
+
+---
+
+## 1. SƠ ĐỒ THỰC THỂ LIÊN KẾT (E-R DIAGRAM CHI TIẾT)
+
+```mermaid
+erDiagram
+    SAN_VAN_DONG ||--o{ DOI_BONG : "la san nha cua"
+    SAN_VAN_DONG ||--o{ TRAN_DAU : "dia diem to chuc"
+    
+    DOI_BONG ||--|{ MAU_AO_DOI_BONG : "co mau ao"
+    DOI_BONG ||--o{ HOP_DONG_CAU_THU : "la doi chu quan"
+    DOI_BONG ||--o{ HOP_DONG_CAU_THU : "dang thi dau tai"
+    DOI_BONG ||--o{ TRAN_DAU : "la doi nha"
+    DOI_BONG ||--o{ TRAN_DAU : "la doi khach"
+    DOI_BONG ||--o{ DANG_KY_THI_DAU : "dang ky cau thu"
+    DOI_BONG ||--o{ SU_KIEN_TRAN_DAU : "doi bong cua su kien"
+
+    CAU_THU ||--|{ HOP_DONG_CAU_THU : "ky ket hop dong"
+    CAU_THU ||--o{ DANG_KY_THI_DAU : "duoc dang ky"
+    CAU_THU ||--o{ SU_KIEN_TRAN_DAU : "tao ra su kien"
+
+    VONG_DAU ||--|{ TRAN_DAU : "thuoc vong dau"
+
+    TRAN_DAU ||--|{ PHAN_CONG_TRONG_TAI : "dieu khien boi"
+    TRAN_DAU ||--|{ DANG_KY_THI_DAU : "co danh sach dang ky"
+    TRAN_DAU ||--o{ SU_KIEN_TRAN_DAU : "dien ra cac su kien"
+
+    TRONG_TAI ||--o{ PHAN_CONG_TRONG_TAI : "duoc phan cong"
+
+    SAN_VAN_DONG {
+        string MaSan PK "Ma san van dong"
+        string TenSan "Ten san thi dau"
+        string DiaChi "Dia chi, thanh pho"
+        int SucChua "Suc chua khan gia"
+    }
+
+    DOI_BONG {
+        string MaDoi PK "Ma doi bong"
+        string TenDoi "Ten cau lac bo"
+        string HLV "Huan luyen vien truong"
+        string MaSanNha FK "San nha co dinh"
+    }
+
+    MAU_AO_DOI_BONG {
+        string MaDoi PK, FK "Ma doi bong"
+        string LoaiMauAo PK "SanNha, SanKhach, AoPhu"
+        string MoTaMau "Mo ta mau ao thi dau"
+    }
+
+    CAU_THU {
+        string MaCauThu PK "Ma dinh danh cau thu"
+        string HoTen "Ho va ten cau thu"
+        date NgaySinh "Ngay sinh"
+        string ViTri "ThuMon, HauVe, TienVe, TienDao"
+        string QuocTich "Quoc tich"
+    }
+
+    HOP_DONG_CAU_THU {
+        string MaHD PK "Ma hop dong"
+        string MaCauThu FK "Ma cau thu"
+        string MaDoiChuQuan FK "Doi bong so huu"
+        string MaDoiHienTai FK "Doi bong dang thi dau"
+        int SoAo "So ao 1-35"
+        date NgayBatDau "Ngay bat dau hop dong"
+        date NgayKetThuc "Ngay ket thuc hop dong"
+        string TrangThai "ChinhThuc hoac ChoMuon"
+        decimal MucLuong "Muc luong thang"
+    }
+
+    TRONG_TAI {
+        string MaTrongTai PK "Ma dinh danh trong tai"
+        string HoTen "Ho va ten trong tai"
+        date NgaySinh "Ngay sinh"
+        string QueQuan "Que quan, tinh thanh"
+        string CapBac "FIFA, QuocGia"
+    }
+
+    VONG_DAU {
+        int MaVong PK "Ma vong dau 1-10"
+        string TenVong "Ten vong dau"
+        int ThuTu "Thu tu vong dau"
+    }
+
+    TRAN_DAU {
+        string MaTran PK "Ma tran dau"
+        int MaVong FK "Thuoc vong dau"
+        string MaDoiNha FK "Doi nha"
+        string MaDoiKhach FK "Doi khach"
+        string MaSan FK "San thi dau"
+        datetime NgayGio "Thoi gian bat dau tran"
+        decimal GiaVe "Gia ve xem tran dau"
+        int SoKhach "So khan gia theo doi"
+        int BanThangNha "So ban doi nha ghi"
+        int BanThangKhach "So ban doi khach ghi"
+        int TheVangNha "So the vang doi nha"
+        int TheVangKhach "So the vang doi khach"
+        int TheDoNha "So the do doi nha"
+        int TheDoKhach "So the do doi khach"
+        string TrangThai "ChuaDienRa hoac DaKetThuc"
+    }
+
+    PHAN_CONG_TRONG_TAI {
+        string MaTran PK, FK "Ma tran dau"
+        string VaiTro PK "Chinh, Bien1, Bien2, Ban"
+        string MaTrongTai FK "Ma trong tai duoc gan"
+    }
+
+    DANG_KY_THI_DAU {
+        string MaTran PK, FK "Ma tran dau"
+        string MaCauThu PK, FK "Ma cau thu dang ky"
+        string MaDoi FK "Doi bong dang ky"
+        string LoaiDangKy "ChinhThuc hoac DuBi"
+        int SoAoTran "So ao mac trong tran"
+    }
+
+    SU_KIEN_TRAN_DAU {
+        string MaSuKien PK "Ma su kien tran"
+        string MaTran FK "Ma tran dau dien ra"
+        string MaCauThu FK "Cau thu tao su kien"
+        string MaDoi FK "Doi bong ghi nhan"
+        string LoaiSuKien "BanThang, TheVang, TheDo"
+        int PhutGhiNhan "Phut thu 1 den 120"
+    }
+```
+
+---
+
+## 2. SƠ ĐỒ LƯỢC ĐỒ QUAN HỆ VẬT LÝ (RELATIONAL SCHEMA DIAGRAM)
+
+```mermaid
+classDiagram
+    class SAN_VAN_DONG {
+        +PK MaSan : VARCHAR(10)
+        TenSan : NVARCHAR(100)
+        DiaChi : NVARCHAR(200)
+        SucChua : INT
+    }
+
+    class DOI_BONG {
+        +PK MaDoi : VARCHAR(10)
+        TenDoi : NVARCHAR(100)
+        HLV : NVARCHAR(100)
+        +FK MaSanNha : VARCHAR(10)
+    }
+
+    class MAU_AO_DOI_BONG {
+        +PK, FK MaDoi : VARCHAR(10)
+        +PK LoaiMauAo : VARCHAR(20)
+        MoTaMau : NVARCHAR(50)
+    }
+
+    class CAU_THU {
+        +PK MaCauThu : VARCHAR(10)
+        HoTen : NVARCHAR(100)
+        NgaySinh : DATE
+        ViTri : VARCHAR(20)
+        QuocTich : NVARCHAR(50)
+    }
+
+    class HOP_DONG_CAU_THU {
+        +PK MaHD : VARCHAR(10)
+        +FK MaCauThu : VARCHAR(10)
+        +FK MaDoiChuQuan : VARCHAR(10)
+        +FK MaDoiHienTai : VARCHAR(10)
+        SoAo : INT [1..35]
+        NgayBatDau : DATE
+        NgayKetThuc : DATE
+        TrangThai : VARCHAR(20)
+        MucLuong : DECIMAL(15,2)
+    }
+
+    class TRONG_TAI {
+        +PK MaTrongTai : VARCHAR(10)
+        HoTen : NVARCHAR(100)
+        NgaySinh : DATE
+        QueQuan : NVARCHAR(100)
+        CapBac : NVARCHAR(50)
+    }
+
+    class VONG_DAU {
+        +PK MaVong : INT
+        TenVong : NVARCHAR(50)
+        ThuTu : INT
+    }
+
+    class TRAN_DAU {
+        +PK MaTran : VARCHAR(10)
+        +FK MaVong : INT
+        +FK MaDoiNha : VARCHAR(10)
+        +FK MaDoiKhach : VARCHAR(10)
+        +FK MaSan : VARCHAR(10)
+        NgayGio : DATETIME
+        GiaVe : DECIMAL(12,2)
+        SoKhach : INT
+        BanThangNha : INT
+        BanThangKhach : INT
+        TheVangNha : INT
+        TheVangKhach : INT
+        TheDoNha : INT
+        TheDoKhach : INT
+        TrangThai : VARCHAR(20)
+    }
+
+    class PHAN_CONG_TRONG_TAI {
+        +PK, FK MaTran : VARCHAR(10)
+        +PK VaiTro : VARCHAR(20)
+        +FK MaTrongTai : VARCHAR(10)
+    }
+
+    class DANG_KY_THI_DAU {
+        +PK, FK MaTran : VARCHAR(10)
+        +PK, FK MaCauThu : VARCHAR(10)
+        +FK MaDoi : VARCHAR(10)
+        LoaiDangKy : VARCHAR(20)
+        SoAoTran : INT
+    }
+
+    class SU_KIEN_TRAN_DAU {
+        +PK MaSuKien : VARCHAR(15)
+        +FK MaTran : VARCHAR(10)
+        +FK MaCauThu : VARCHAR(10)
+        +FK MaDoi : VARCHAR(10)
+        LoaiSuKien : VARCHAR(20)
+        PhutGhiNhan : INT
+    }
+
+    SAN_VAN_DONG "1" <-- "N" DOI_BONG : MaSanNha
+    SAN_VAN_DONG "1" <-- "N" TRAN_DAU : MaSan
+    DOI_BONG "1" <-- "N" MAU_AO_DOI_BONG : MaDoi
+    DOI_BONG "1" <-- "N" HOP_DONG_CAU_THU : MaDoiChuQuan
+    DOI_BONG "1" <-- "N" HOP_DONG_CAU_THU : MaDoiHienTai
+    DOI_BONG "1" <-- "N" TRAN_DAU : MaDoiNha
+    DOI_BONG "1" <-- "N" TRAN_DAU : MaDoiKhach
+    DOI_BONG "1" <-- "N" DANG_KY_THI_DAU : MaDoi
+    DOI_BONG "1" <-- "N" SU_KIEN_TRAN_DAU : MaDoi
+    CAU_THU "1" <-- "N" HOP_DONG_CAU_THU : MaCauThu
+    CAU_THU "1" <-- "N" DANG_KY_THI_DAU : MaCauThu
+    CAU_THU "1" <-- "N" SU_KIEN_TRAN_DAU : MaCauThu
+    VONG_DAU "1" <-- "N" TRAN_DAU : MaVong
+    TRAN_DAU "1" <-- "N" PHAN_CONG_TRONG_TAI : MaTran
+    TRONG_TAI "1" <-- "N" PHAN_CONG_TRONG_TAI : MaTrongTai
+    TRAN_DAU "1" <-- "N" DANG_KY_THI_DAU : MaTran
+    TRAN_DAU "1" <-- "N" SU_KIEN_TRAN_DAU : MaTran
+```
+
+---
+
+## 3. SƠ ĐỒ QUY TRÌNH NGHIỆP VỤ ĐIỀU HÀNH TRẬN ĐẤU (BUSINESS PROCESS)
+
+```mermaid
+flowchart TD
+    Start(["Bắt đầu mùa giải"]) --> Setup["1. Thiết lập 6 đội bóng, sân nhà, $\ge 2$ màu áo & danh sách cầu thủ"]
+    Setup --> CreateSchedule["2. Khởi tạo lịch thi đấu 10 vòng (30 trận vòng tròn 2 lượt)"]
+    CreateSchedule --> AssignReferees["3. Phân công tổ 4 trọng tài cho từng trận (Kiểm tra: 1 TT tối đa 1 trận/vòng)"]
+    AssignReferees --> PreMatch["4. Trước trận: Đăng ký danh sách thi đấu (Mỗi đội tối đa 18 cầu thủ)"]
+    PreMatch --> MatchInPlay["5. Trận đấu diễn ra: Ghi nhận sự kiện (Bàn thắng, Thẻ vàng, Thẻ đỏ theo phút)"]
+    MatchInPlay --> PostMatch["6. Kết thúc trận: Cập nhật tỉ số chung cuộc, số khán giả, giá vé"]
+    PostMatch --> IntegrityCheck{"7. Kiểm tra toàn vẹn:\nTổng bàn thắng, thẻ khớp tỉ số?"}
+    IntegrityCheck -- "Sai lệch" --> Rollback["Hủy bỏ cập nhật (Rollback Transaction)"]
+    IntegrityCheck -- "Khớp đúng" --> CommitUpdate["Xác nhận lưu (Commit Transaction) & Trạng thái 'DaKetThuc'"]
+    CommitUpdate --> AutoReport["8. Cập nhật Bảng xếp hạng, Top 10 phá lưới, Doanh thu sân & Lương trọng tài"]
+    AutoReport --> EndMatch(["Hoàn tất trận đấu"])
+```
