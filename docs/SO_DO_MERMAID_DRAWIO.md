@@ -271,3 +271,38 @@ flowchart TD
     CommitUpdate --> AutoReport["8. Cập nhật Bảng xếp hạng, Top 10 phá lưới, Doanh thu sân & Lương trọng tài"]
     AutoReport --> EndMatch(["Hoàn tất trận đấu"])
 ```
+
+---
+
+## 4. SƠ ĐỒ KIẾN TRÚC CƠ SỞ DỮ LIỆU PHÂN TÁN (DISTRIBUTED ARCHITECTURE)
+
+```mermaid
+flowchart TD
+    subgraph Site0["TRẠM TRUNG TÂM (SITE 0) - LIÊN ĐOÀN BÓNG ĐÁ"]
+        DB0[("Cơ sở dữ liệu trung tâm\ncsdl_trungtam")]
+        GlobalViews["Khung nhìn hợp nhất toàn cục:\nvw_global_tran_dau\nvw_global_su_kien"]
+        SecFrag["Mảnh phân dọc bảo mật:\nHOP_DONG_TAI_CHINH (MucLuong)"]
+        CentralCatalog["Dữ liệu danh mục gốc:\nDOI_BONG, CAU_THU, TRONG_TAI, VONG_DAU"]
+    end
+
+    subgraph Site1["CHI NHÁNH MIỀN BẮC (SITE 1)"]
+        DB1[("Cơ sở dữ liệu chi nhánh 1\ncsdl_chinhanh_bac")]
+        Frag1_San["Phân mảnh ngang:\nSAN_VAN_DONG_1 (Hàng Đẫy, Mỹ Đình, Lạch Tray, Thiên Trường)"]
+        Frag1_Tran["Phân mảnh ngang:\nTRAN_DAU_1 (25 trận đấu miền Bắc)"]
+        Frag1_PK["Phân mảnh dẫn xuất:\nPHAN_CONG_TRONG_TAI_1\nDANG_KY_THI_DAU_1\nSU_KIEN_TRAN_DAU_1"]
+        Replica1["Dữ liệu nhân bản tra cứu:\nDOI_BONG, CAU_THU, TRONG_TAI, VONG_DAU"]
+    end
+
+    subgraph Site2["CHI NHÁNH MIỀN NAM (SITE 2)"]
+        DB2[("Cơ sở dữ liệu chi nhánh 2\ncsdl_chinhanh_nam")]
+        Frag2_San["Phân mảnh ngang:\nSAN_VAN_DONG_2 (Pleiku)"]
+        Frag2_Tran["Phân mảnh ngang:\nTRAN_DAU_2 (5 trận đấu sân Pleiku)"]
+        Frag2_PK["Phân mảnh dẫn xuất:\nPHAN_CONG_TRONG_TAI_2\nDANG_KY_THI_DAU_2\nSU_KIEN_TRAN_DAU_2"]
+        Replica2["Dữ liệu nhân bản tra cứu:\nDOI_BONG, CAU_THU, TRONG_TAI, VONG_DAU"]
+    end
+
+    %% Đường kết nối
+    Site0 <== "Đồng bộ danh mục & Nhận báo cáo" ==> Site1
+    Site0 <== "Đồng bộ danh mục & Nhận báo cáo" ==> Site2
+    Site1 <-. "Truy vấn liên trạm (Foreign Data Wrapper)" .-> Site2
+```

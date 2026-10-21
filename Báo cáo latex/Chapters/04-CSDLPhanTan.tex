@@ -1,0 +1,268 @@
+\chapter{PHÂN TÍCH VÀ THIẾT KẾ CƠ SỞ DỮ LIỆU PHÂN TÁN}
+
+\section{Mô hình phân tán theo chi nhánh và số liệu giả định}
+
+\subsection{Lý do phân tán và mô hình mạng trạm}
+Giải bóng đá chuyên nghiệp có các trận đấu diễn ra phân bố tại nhiều tỉnh thành trên cả nước. Việc lưu trữ toàn bộ dữ liệu tập trung tại một máy chủ duy nhất sẽ làm tăng tải đường truyền mạng diện rộng khi các ban tổ chức tại các sân đồng thời gửi danh sách thi đấu và cập nhật diễn biến sự kiện trực tiếp. Hơn nữa, việc phân tán dữ liệu theo khu vực địa lý giúp tăng cường tính sẵn sàng, giảm độ trễ truy vấn và bảo đảm an toàn thông tin.
+
+Hệ thống được thiết kế phân tán trên ba trạm kết nối qua mạng máy tính:
+\begin{itemize}
+    \item \textbf{Trạm Trung tâm (Trụ sở ban tổ chức giải đấu)}: Quản lý tổng thể giải đấu, theo dõi toàn bộ các trận đấu trên cả nước, lưu trữ thông tin hợp đồng tài chính bảo mật (mức lương cầu thủ, thù lao chi trả), và tổng hợp kết quả chung cuộc của toàn mùa giải.
+    \item \textbf{Chi nhánh Miền Bắc (Ban điều hành khu vực phía Bắc)}: Quản lý trực tiếp các sân vận động và điều hành các trận đấu diễn ra tại khu vực phía Bắc gồm: Sân Hàng Đẫy, Sân Quốc gia Mỹ Đình, Sân Lạch Tray và Sân Thiên Trường.
+    \item \textbf{Chi nhánh Miền Nam (Ban điều hành khu vực phía Nam)}: Quản lý sân vận động và điều hành các trận đấu diễn ra tại khu vực phía Nam gồm: Sân Pleiku.
+\end{itemize}
+
+\subsection{Số liệu giả định tần suất truy vấn}
+Để phân tích chiến lược phân mảnh hợp lý, xét chu kỳ một vòng đấu gồm 3 trận diễn ra vào cuối tuần với số liệu giả định về tần suất thực thi các ứng dụng tại các trạm được trình bày trong Bảng~\ref{tab:tan_suat_ung_dung}:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|p{6.5cm}|c|c|c|}
+\hline
+\textbf{Ứng dụng} & \textbf{Mô tả thao tác} & \textbf{Chi nhánh Bắc} & \textbf{Chi nhánh Nam} & \textbf{Trung tâm} \\ \hline
+Ứng dụng 1 & Tra cứu thông tin đội bóng, cầu thủ, màu áo & 800 lần & 300 lần & 100 lần \\ \hline
+Ứng dụng 2 & Đăng ký 18 cầu thủ trước trận đấu & 20 lần & 10 lần & 0 lần \\ \hline
+Ứng dụng 3 & Ghi nhận tỉ số, sự kiện bàn thắng, thẻ phạt & 150 lần & 50 lần & 10 lần \\ \hline
+Ứng dụng 4 & Thống kê doanh thu vé sân và tiền công trọng tài & 10 lần & 5 lần & 50 lần \\ \hline
+Ứng dụng 5 & Quản lý hợp đồng tài chính, mức lương cầu thủ & 0 lần & 0 lần & 80 lần \\ \hline
+\end{tabular}
+\caption{Bảng số liệu giả định tần suất ứng dụng tại các trạm}
+\label{tab:tan_suat_ung_dung}
+\end{table}
+
+Số liệu cho thấy các thao tác điều hành trận đấu mang tính cục bộ cao tại từng sân vận động, thông tin danh mục có tần suất đọc lớn nhưng ít biến động, trong khi dữ liệu tài chính chỉ được xử lý tập trung tại trạm trung tâm.
+
+\section{Thiết kế các phân mảnh dữ liệu}
+
+Dựa trên tần suất truy vấn và phạm vi địa lý, hệ thống áp dụng kết hợp các kỹ thuật phân mảnh ngang nguyên thủy, phân mảnh ngang dẫn xuất, phân mảnh dọc và nhân bản dữ liệu.
+
+\subsection{Phân mảnh ngang nguyên thủy}
+
+\paragraph{(1) Phân mảnh quan hệ SÂN VẬN ĐỘNG:}
+Phân mảnh theo địa bàn quản lý của hai chi nhánh dựa trên tập vị từ:
+\begin{itemize}
+    \item $p_1$: $\text{MaSan} \in \{\text{'SAN\_HD'}, \text{'SAN\_MD'}, \text{'SAN\_LT'}, \text{'SAN\_TT'}\}$ (Khu vực phía Bắc)
+    \item $p_2$: $\text{MaSan} \in \{\text{'SAN\_PK'}\}$ (Khu vực phía Nam)
+\end{itemize}
+
+Các mảnh ngang nguyên thủy được xác định:
+$$\text{SAN\_VAN\_DONG}_1 = \sigma_{p_1}(\text{SAN\_VAN\_DONG})$$
+$$\text{SAN\_VAN\_DONG}_2 = \sigma_{p_2}(\text{SAN\_VAN\_DONG})$$
+Mảnh $\text{SAN\_VAN\_DONG}_1$ được đặt tại Chi nhánh Miền Bắc; mảnh $\text{SAN\_VAN\_DONG}_2$ được đặt tại Chi nhánh Miền Nam.
+
+\paragraph{(2) Phân mảnh quan hệ TRẬN ĐẤU:}
+Mỗi trận đấu thuộc về chi nhánh quản lý sân vận động nơi trận đấu đó diễn ra, dựa trên tập vị từ:
+\begin{itemize}
+    \item $q_1$: $\text{MaSan} \in \{\text{'SAN\_HD'}, \text{'SAN\_MD'}, \text{'SAN\_LT'}, \text{'SAN\_TT'}\}$
+    \item $q_2$: $\text{MaSan} \in \{\text{'SAN\_PK'}\}$
+\end{itemize}
+
+Các mảnh ngang nguyên thủy:
+$$\text{TRAN\_DAU}_1 = \sigma_{q_1}(\text{TRAN\_DAU})$$
+$$\text{TRAN\_DAU}_2 = \sigma_{q_2}(\text{TRAN\_DAU})$$
+Mảnh $\text{TRAN\_DAU}_1$ chứa 25 trận đấu diễn ra tại các sân miền Bắc đặt tại Chi nhánh Miền Bắc; mảnh $\text{TRAN\_DAU}_2$ chứa 5 trận đấu diễn ra tại sân Pleiku đặt tại Chi nhánh Miền Nam.
+
+\subsection{Phân mảnh ngang dẫn xuất}
+Các thông tin liên quan trực tiếp đến từng trận đấu được phân mảnh dẫn xuất theo quan hệ chủ \texttt{TRAN\_DAU} thông qua phép bán kết nối:
+
+\paragraph{(1) Phân mảnh quan hệ PHÂN CÔNG TRỌNG TÀI:}
+$$\text{PHAN\_CONG\_TRONG\_TAI}_1 = \text{PHAN\_CONG\_TRONG\_TAI} \ltimes_{\text{MaTran}} \text{TRAN\_DAU}_1$$
+$$\text{PHAN\_CONG\_TRONG\_TAI}_2 = \text{PHAN\_CONG\_TRONG\_TAI} \ltimes_{\text{MaTran}} \text{TRAN\_DAU}_2$$
+
+\paragraph{(2) Phân mảnh quan hệ ĐĂNG KÝ THI ĐẤU:}
+$$\text{DANG\_KY\_THI\_DAU}_1 = \text{DANG\_KY\_THI\_DAU} \ltimes_{\text{MaTran}} \text{TRAN\_DAU}_1$$
+$$\text{DANG\_KY\_THI\_DAU}_2 = \text{DANG\_KY\_THI\_DAU} \ltimes_{\text{MaTran}} \text{TRAN\_DAU}_2$$
+
+\paragraph{(3) Phân mảnh quan hệ SỰ KIỆN TRẬN ĐẤU:}
+$$\text{SU\_KIEN\_TRAN\_DAU}_1 = \text{SU\_KIEN\_TRAN\_DAU} \ltimes_{\text{MaTran}} \text{TRAN\_DAU}_1$$
+$$\text{SU\_KIEN\_TRAN\_DAU}_2 = \text{SU\_KIEN\_TRAN\_DAU} \ltimes_{\text{MaTran}} \text{TRAN\_DAU}_2$$
+
+Toàn bộ các mảnh có chỉ số 1 được định vị tại Chi nhánh Miền Bắc; các mảnh có chỉ số 2 được định vị tại Chi nhánh Miền Nam.
+
+\subsection{Phân mảnh dọc}
+Áp dụng cho quan hệ \texttt{HOP\_DONG\_CAU\_THU} nhằm bảo đảm an toàn dữ liệu tài chính:
+\begin{itemize}
+    \item \textbf{Mảnh chuyên môn thi đấu}: Phục vụ công tác kiểm tra tư cách thi đấu và số áo tại các chi nhánh:
+    $$\text{HOP\_DONG\_THI\_DAU} = \pi_{\text{MaHD}, \text{MaCauThu}, \text{MaDoiChuQuan}, \text{MaDoiHienTai}, \text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai}}(\text{HOP\_DONG\_CAU\_THU})$$
+    \item \textbf{Mảnh bảo mật tài chính}: Lưu giữ mức lương hàng tháng của cầu thủ, chỉ phục vụ kế toán ban tổ chức:
+    $$\text{HOP\_DONG\_TAI\_CHINH} = \pi_{\text{MaHD}, \text{MucLuong}}(\text{HOP\_DONG\_CAU\_THU})$$
+\end{itemize}
+
+Mảnh $\text{HOP\_DONG\_THI\_DAU}$ được cung cấp cho cả ba trạm; mảnh $\text{HOP\_DONG\_TAI\_CHINH}$ chỉ được lưu trữ độc quyền tại Trạm Trung tâm.
+
+\subsection{Nhân bản dữ liệu}
+Các bảng danh mục gồm \texttt{DOI\_BONG}, \texttt{MAU\_AO\_DOI\_BONG}, \texttt{CAU\_THU}, \texttt{TRONG\_TAI} và \texttt{VONG\_DAU} được nhân bản đầy đủ trên cả ba trạm. Nhờ vậy, mọi thao tác hiển thị tên câu lạc bộ, tên cầu thủ, trọng tài tại các chi nhánh đều được thực hiện cục bộ mà không phát sinh chi phí truyền tải qua mạng.
+
+% \section{Chứng minh tính đúng đắn của thiết kế phân mảnh}
+% 
+% Một thiết kế phân mảnh hợp lệ phải thỏa mãn đồng thời ba quy tắc:
+% 
+% \subsection{Quy tắc tính đầy đủ}
+% Mọi mục dữ liệu trong quan hệ toàn cục đều phải thuộc về ít nhất một phân mảnh:
+% \begin{itemize}
+%     \item Đối với phân mảnh ngang \texttt{SAN\_VAN\_DONG} và \texttt{TRAN\_DAU}: Tập vị từ bao quát toàn bộ miền giá trị của mã sân vận động trong giải:
+%     $$\text{dom}(\text{MaSan}) = \{\text{'SAN\_HD'}, \text{'SAN\_MD'}, \text{'SAN\_LT'}, \text{'SAN\_TT'}\} \cup \{\text{'SAN\_PK'}\}$$
+%     Do đó, mọi trận đấu trong mùa giải đều thỏa mãn điều kiện của đúng một mảnh, không có bản ghi nào bị thất thoát.
+%     \item Đối với phân mảnh ngang dẫn xuất: Mọi bản ghi đăng ký thi đấu, sự kiện, phân công trọng tài đều gắn với một trận đấu xác định. Do quan hệ chủ \texttt{TRAN\_DAU} thỏa mãn tính đầy đủ nên các quan hệ dẫn xuất cũng thỏa mãn tính đầy đủ.
+%     \item Đối với phân mảnh dọc: Tập thuộc tính ban đầu bằng hợp của các thuộc tính trong hai mảnh chiếu:
+%     $$\text{attrs}(\text{HOP\_DONG\_THI\_DAU}) \cup \text{attrs}(\text{HOP\_DONG\_TAI\_CHINH}) = \text{attrs}(\text{HOP\_DONG\_CAU\_THU})$$
+% \end{itemize}
+% 
+% \subsection{Quy tắc tính tái thiết được}
+% Quan hệ toàn cục có thể được phục hồi chính xác từ các mảnh thành phần:
+% \begin{itemize}
+%     \item Các quan hệ phân mảnh ngang được tái thiết qua phép hợp:
+%     $$\text{SAN\_VAN\_DONG} = \text{SAN\_VAN\_DONG}_1 \cup \text{SAN\_VAN\_DONG}_2$$
+%     $$\text{TRAN\_DAU} = \text{TRAN\_DAU}_1 \cup \text{TRAN\_DAU}_2$$
+%     \item Quan hệ phân mảnh dọc được tái thiết qua phép kết nối tự nhiên theo thuộc tính khóa chính:
+%     $$\text{HOP\_DONG\_CAU\_THU} = \text{HOP\_DONG\_THI\_DAU} \bowtie_{\text{MaHD}} \text{HOP\_DONG\_TAI\_CHINH}$$
+% \end{itemize}
+% 
+% \subsection{Quy tắc tính tách biệt}
+% \begin{itemize}
+%     \item Đối với phân mảnh ngang: Hai điều kiện vị từ loại trừ lẫn nhau ($q_1 \wedge q_2 = \text{False}$), do đó:
+%     $$\text{TRAN\_DAU}_1 \cap \text{TRAN\_DAU}_2 = \emptyset$$
+%     Dữ liệu giữa các chi nhánh không bị chồng lấn hay dư thừa.
+%     \item Đối với phân mảnh dọc: Giao của hai tập thuộc tính đúng bằng khóa chính:
+%     $$\text{attrs}(\text{HOP\_DONG\_THI\_DAU}) \cap \text{attrs}(\text{HOP\_DONG\_TAI\_CHINH}) = \{\text{MaHD}\}$$
+% \end{itemize}
+
+\section{Định vị dữ liệu và sơ đồ kiến trúc hệ thống}
+
+Bảng~\ref{tab:ma_tran_dinh_vi} mô tả ma trận phân phối các mảnh dữ liệu trên toàn bộ ba trạm:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|c|c|c|l|}
+\hline
+\textbf{Quan hệ / Mảnh dữ liệu} & \textbf{Trung tâm} & \textbf{Chi nhánh Bắc} & \textbf{Chi nhánh Nam} & \textbf{Phương thức} \\ \hline
+$\text{SAN\_VAN\_DONG}_1$ & Xem & Gốc & Không & Phân mảnh ngang \\ \hline
+$\text{SAN\_VAN\_DONG}_2$ & Xem & Không & Gốc & Phân mảnh ngang \\ \hline
+$\text{DOI\_BONG}$ & Gốc & Nhân bản & Nhân bản & Nhân bản toàn phần \\ \hline
+$\text{MAU\_AO\_DOI\_BONG}$ & Gốc & Nhân bản & Nhân bản & Nhân bản toàn phần \\ \hline
+$\text{CAU\_THU}$ & Gốc & Nhân bản & Nhân bản & Nhân bản toàn phần \\ \hline
+$\text{TRONG\_TAI}$ & Gốc & Nhân bản & Nhân bản & Nhân bản toàn phần \\ \hline
+$\text{VONG\_DAU}$ & Gốc & Nhân bản & Nhân bản & Nhân bản toàn phần \\ \hline
+$\text{TRAN\_DAU}_1$ & Tổng hợp & Gốc & Không & Phân mảnh ngang \\ \hline
+$\text{TRAN\_DAU}_2$ & Tổng hợp & Không & Gốc & Phân mảnh ngang \\ \hline
+$\text{PHAN\_CONG\_TRONG\_TAI}_1$ & Xem & Gốc & Không & Phân mảnh dẫn xuất \\ \hline
+$\text{PHAN\_CONG\_TRONG\_TAI}_2$ & Xem & Không & Gốc & Phân mảnh dẫn xuất \\ \hline
+$\text{DANG\_KY\_THI\_DAU}_1$ & Xem & Gốc & Không & Phân mảnh dẫn xuất \\ \hline
+$\text{DANG\_KY\_THI\_DAU}_2$ & Xem & Không & Gốc & Phân mảnh dẫn xuất \\ \hline
+$\text{SU\_KIEN\_TRAN\_DAU}_1$ & Xem & Gốc & Không & Phân mảnh dẫn xuất \\ \hline
+$\text{SU\_KIEN\_TRAN\_DAU}_2$ & Xem & Không & Gốc & Phân mảnh dẫn xuất \\ \hline
+$\text{HOP\_DONG\_THI\_DAU}$ & Gốc & Nhân bản & Nhân bản & Phân mảnh dọc \\ \hline
+$\text{HOP\_DONG\_TAI\_CHINH}$ & Độc quyền & Không & Không & Phân mảnh dọc \\ \hline
+\end{tabular}
+\caption{Ma trận định vị và phân phối dữ liệu trên hệ thống}
+\label{tab:ma_tran_dinh_vi}
+\end{table}
+
+Hình~\ref{fig:csdl_phan_tan} minh họa sơ đồ kiến trúc tổng thể của hệ thống cơ sở dữ liệu phân tán:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[angle=90, width=0.6\textheight, keepaspectratio]{Figures/DDB.png}
+    \caption{Sơ đồ kiến trúc tổng quát của hệ cơ sở dữ liệu phân tán}
+    \label{fig:csdl_phan_tan}
+\end{figure}
+
+\section{Mô phỏng cài đặt và thực nghiệm truy vấn phân tán trên PostgreSQL}
+
+\subsection{Giải pháp mô phỏng các trạm độc lập}
+Để kiểm thử tính đúng đắn của thiết kế phân mảnh và đánh giá khả năng xử lý truy vấn phân tán trong môi trường thực nghiệm, đề tài triển khai mô phỏng ba trạm vật lý thông qua ba không gian tên độc lập trên cùng một máy chủ:
+\begin{itemize}
+    \item \texttt{site0\_trungtam}: Đại diện cho máy chủ trung tâm của Liên đoàn bóng đá, lưu trữ các bảng danh mục gốc, mảnh bảo mật tài chính và các khung nhìn tái thiết toàn cục.
+    \item \texttt{site1\_mienbac}: Đại diện cho máy chủ chi nhánh miền Bắc, lưu trữ bản sao danh mục, các mảnh ngang về sân vận động, trận đấu và các mảnh dẫn xuất sự kiện diễn ra tại các sân phía Bắc.
+    \item \texttt{site2\_miennam}: Đại diện cho máy chủ chi nhánh miền Nam, quản lý sân Pleiku và các trận đấu, sự kiện diễn ra tại khu vực phía Nam.
+\end{itemize}
+
+\subsection{Kịch bản khởi tạo phân mảnh và phân tán}
+Các câu lệnh khởi tạo phân mảnh được xây dựng theo đúng các vị từ và phép toán đã chứng minh:
+
+\begin{lstlisting}[language=SQL, caption={Khởi tạo các bảng phân mảnh và nhân bản trên các trạm}]
+-- 1. Tao cac khong gian ten dai dien cho 3 tram
+CREATE SCHEMA site0_trungtam;
+CREATE SCHEMA site1_mienbac;
+CREATE SCHEMA site2_miennam;
+
+-- 2. Nhan ban toan phan cac bang danh muc sang Chi nhanh Bac va Nam
+CREATE TABLE site1_mienbac.DOI_BONG (LIKE public.DOI_BONG INCLUDING ALL);
+CREATE TABLE site1_mienbac.CAU_THU (LIKE public.CAU_THU INCLUDING ALL);
+INSERT INTO site1_mienbac.DOI_BONG SELECT * FROM public.DOI_BONG;
+INSERT INTO site1_mienbac.CAU_THU SELECT * FROM public.CAU_THU;
+
+CREATE TABLE site2_miennam.DOI_BONG (LIKE public.DOI_BONG INCLUDING ALL);
+CREATE TABLE site2_miennam.CAU_THU (LIKE public.CAU_THU INCLUDING ALL);
+INSERT INTO site2_miennam.DOI_BONG SELECT * FROM public.DOI_BONG;
+INSERT INTO site2_miennam.CAU_THU SELECT * FROM public.CAU_THU;
+
+-- 3. Phan manh ngang nguyen thuy: TRAN_DAU
+CREATE TABLE site1_mienbac.TRAN_DAU_1 (LIKE public.TRAN_DAU INCLUDING ALL);
+INSERT INTO site1_mienbac.TRAN_DAU_1
+SELECT * FROM public.TRAN_DAU
+WHERE MaSan IN ('SAN_HD', 'SAN_MD', 'SAN_LT', 'SAN_TT');
+
+CREATE TABLE site2_miennam.TRAN_DAU_2 (LIKE public.TRAN_DAU INCLUDING ALL);
+INSERT INTO site2_miennam.TRAN_DAU_2
+SELECT * FROM public.TRAN_DAU
+WHERE MaSan IN ('SAN_PK');
+
+-- 4. Phan manh ngang dan xuat: SU_KIEN_TRAN_DAU (Ban ket noi)
+CREATE TABLE site1_mienbac.SU_KIEN_TRAN_DAU_1 (LIKE public.SU_KIEN_TRAN_DAU INCLUDING ALL);
+INSERT INTO site1_mienbac.SU_KIEN_TRAN_DAU_1
+SELECT sk.* FROM public.SU_KIEN_TRAN_DAU sk
+JOIN site1_mienbac.TRAN_DAU_1 t ON sk.MaTran = t.MaTran;
+
+CREATE TABLE site2_miennam.SU_KIEN_TRAN_DAU_2 (LIKE public.SU_KIEN_TRAN_DAU INCLUDING ALL);
+INSERT INTO site2_miennam.SU_KIEN_TRAN_DAU_2
+SELECT sk.* FROM public.SU_KIEN_TRAN_DAU sk
+JOIN site2_miennam.TRAN_DAU_2 t ON sk.MaTran = t.MaTran;
+
+-- 5. Phan manh doc: HOP_DONG_CAU_THU
+CREATE TABLE site1_mienbac.HOP_DONG_THI_DAU AS
+SELECT MaHD, MaCauThu, MaDoiChuQuan, MaDoiHienTai, SoAo, NgayBatDau, NgayKetThuc, TrangThai
+FROM public.HOP_DONG_CAU_THU;
+
+CREATE TABLE site0_trungtam.HOP_DONG_TAI_CHINH AS
+SELECT MaHD, MucLuong FROM public.HOP_DONG_CAU_THU;
+\end{lstlisting}
+
+\subsection{Tái thiết dữ liệu toàn cục tại trạm trung tâm}
+Tại trạm trung tâm, dữ liệu toàn cục được tái thiết trong suốt qua các khung nhìn sử dụng phép hợp và phép kết nối tự nhiên:
+
+\begin{lstlisting}[language=SQL, caption={Tái thiết dữ liệu toàn cục bằng khung nhìn}]
+-- Tai thiet toan cuc quan he TRAN_DAU (Tong hop tu 2 mien)
+CREATE OR REPLACE VIEW site0_trungtam.vw_global_tran_dau AS
+SELECT * FROM site1_mienbac.TRAN_DAU_1
+UNION ALL
+SELECT * FROM site2_miennam.TRAN_DAU_2;
+
+-- Tai thiet toan cuc quan he HOP_DONG_CAU_THU (Ket noi tu 2 manh doc)
+CREATE OR REPLACE VIEW site0_trungtam.vw_global_hop_dong_cau_thu AS
+SELECT 
+    td.MaHD, td.MaCauThu, td.MaDoiChuQuan, td.MaDoiHienTai, 
+    td.SoAo, td.NgayBatDau, td.NgayKetThuc, td.TrangThai, 
+    tc.MucLuong
+FROM site1_mienbac.HOP_DONG_THI_DAU td
+JOIN site0_trungtam.HOP_DONG_TAI_CHINH tc ON td.MaHD = tc.MaHD;
+\end{lstlisting}
+
+\subsection{Kiểm chứng tính trong suốt phân tán}
+Thực hiện truy vấn kiểm tra số lượng trận đấu ghi nhận tại từng chi nhánh và trên toàn hệ thống:
+
+\begin{lstlisting}[language=SQL, caption={Truy vấn thống kê phân tán trên toàn hệ thống}]
+SELECT 'Chi nhanh Mien Bac' AS DonVi, COUNT(*) AS SoTran 
+FROM site1_mienbac.TRAN_DAU_1
+UNION ALL
+SELECT 'Chi nhanh Mien Nam' AS DonVi, COUNT(*) AS SoTran 
+FROM site2_miennam.TRAN_DAU_2
+UNION ALL
+SELECT 'Tong cong toan quoc' AS DonVi, COUNT(*) AS SoTran 
+FROM site0_trungtam.vw_global_tran_dau;
+\end{lstlisting}
+
+Kết quả thực nghiệm xác nhận chi nhánh miền Bắc quản lý 25 trận đấu, chi nhánh miền Nam quản lý 5 trận đấu, và khung nhìn toàn cục tại trung tâm tái thiết chính xác 30 trận đấu của toàn bộ 10 vòng đấu mùa giải mà không làm sai lệch hay trùng lặp dữ liệu. Mô hình bảo đảm đầy đủ tính trong suốt vị trí và tính trong suốt phân mảnh đối với ứng dụng phía người dùng.
+

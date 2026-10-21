@@ -216,8 +216,8 @@ flowchart TD
 | 7 | **GĐ 2:** Viết 5 Transactions nghiệp vụ trọng yếu (`sql/03_transactions_procedures.sql`) | **Đã hoàn thành** |
 | 8 | **GĐ 2:** Viết Stored Procedures/Views thống kê & Script nạp dữ liệu mẫu 30 trận (`sql/04_views_statistics.sql`, `sql/05_mock_data.sql`) | **Đã hoàn thành** |
 | 9 | **GĐ 2:** *Chốt nội dung SQL, tài liệu docs & Viết LaTeX Chương 3 (`Chapters/03-CaiDatCSDL.tex`)* | **Đã hoàn thành** |
-| 10 | **GĐ 3:** Phân tích CSDL Phân tán (Phân mảnh ngang/dọc/dẫn xuất, định vị, nhân bản) | Chưa thực hiện |
-| 11 | **GĐ 3:** *Chốt mô hình & Viết LaTeX Chương 4 (Thiết kế CSDL Phân tán)* | Chưa thực hiện |
+| 10 | **GĐ 3:** Phân tích CSDL Phân tán (Phân mảnh ngang/dọc/dẫn xuất, định vị, nhân bản) (`docs/GIAI_DOAN_3_CSDL_PHAN_TAN.md`, `sql/06_distributed_simulation.sql`) | **Đã hoàn thành** |
+| 11 | **GĐ 3:** *Chốt mô hình & Viết LaTeX Chương 4 (Thiết kế CSDL Phân tán) (`Chapters/04-CSDLPhanTan.tex`)* | **Đã hoàn thành** |
 | 12 | **GĐ 4:** Xây dựng giao diện ứng dụng kết nối CSDL và các tính năng | Chưa thực hiện |
 | 13 | **GĐ 4:** *Chốt ứng dụng & Viết LaTeX Chương 5 (Giao diện ứng dụng & Minh chứng thử nghiệm)* | Chưa thực hiện |
 | 14 | **GĐ 5:** Biên dịch toàn bộ tài liệu LaTeX ra file PDF / Word hoàn chỉnh | Chưa thực hiện |
