@@ -211,11 +211,11 @@ flowchart TD
 | 2 | **GĐ 1:** Phân tích từ điển dữ liệu, Vẽ E-R Diagram (`docs/SO_DO_MERMAID_DRAWIO.md`) | **Đã hoàn thành** |
 | 3 | **GĐ 1:** Lược đồ quan hệ, Phụ thuộc hàm, Chứng minh chuẩn BCNF (`docs/GIAI_DOAN_1_THIET_KE_CSDL.md`) | **Đã hoàn thành** |
 | 4 | **GĐ 1:** *Chốt nội dung & Viết LaTeX Chương 1 (Khảo sát & E-R) + Chương 2 (Chuẩn hóa BCNF)* | **Đã hoàn thành** |
-| 5 | **GĐ 2:** Viết Script SQL DDL tạo bảng, khóa, ràng buộc | Chưa thực hiện |
-| 6 | **GĐ 2:** Viết 5 Triggers kiểm tra nghiệp vụ và toàn vẹn dữ liệu | Chưa thực hiện |
-| 7 | **GĐ 2:** Viết 5 Transactions nghiệp vụ trọng yếu | Chưa thực hiện |
-| 8 | **GĐ 2:** Viết Stored Procedures/Views thống kê & Script sinh dữ liệu mẫu 30 trận | Chưa thực hiện |
-| 9 | **GĐ 2:** *Chốt nội dung SQL & Viết LaTeX Chương 3 (Cài đặt CSDL, Triggers & Transactions)* | Chưa thực hiện |
+| 5 | **GĐ 2:** Viết Script SQL DDL tạo bảng, khóa, ràng buộc (`sql/01_schema_ddl.sql`) | **Đã hoàn thành** |
+| 6 | **GĐ 2:** Viết 5 Triggers kiểm tra nghiệp vụ và toàn vẹn dữ liệu (`sql/02_triggers.sql`) | **Đã hoàn thành** |
+| 7 | **GĐ 2:** Viết 5 Transactions nghiệp vụ trọng yếu (`sql/03_transactions_procedures.sql`) | **Đã hoàn thành** |
+| 8 | **GĐ 2:** Viết Stored Procedures/Views thống kê & Script nạp dữ liệu mẫu 30 trận (`sql/04_views_statistics.sql`, `sql/05_mock_data.sql`) | **Đã hoàn thành** |
+| 9 | **GĐ 2:** *Chốt nội dung SQL, tài liệu docs & Viết LaTeX Chương 3 (`Chapters/03-CaiDatCSDL.tex`)* | **Đã hoàn thành** |
 | 10 | **GĐ 3:** Phân tích CSDL Phân tán (Phân mảnh ngang/dọc/dẫn xuất, định vị, nhân bản) | Chưa thực hiện |
 | 11 | **GĐ 3:** *Chốt mô hình & Viết LaTeX Chương 4 (Thiết kế CSDL Phân tán)* | Chưa thực hiện |
 | 12 | **GĐ 4:** Xây dựng giao diện ứng dụng kết nối CSDL và các tính năng | Chưa thực hiện |

@@ -14,122 +14,122 @@
 
 ```mermaid
 erDiagram
-    SAN_VAN_DONG ||--o{ DOI_BONG : "la san nha cua"
-    SAN_VAN_DONG ||--o{ TRAN_DAU : "dia diem to chuc"
+    SAN_VAN_DONG ||--o{ DOI_BONG : "là sân nhà của"
+    SAN_VAN_DONG ||--o{ TRAN_DAU : "địa điểm tổ chức"
     
-    DOI_BONG ||--|{ MAU_AO_DOI_BONG : "co mau ao"
-    DOI_BONG ||--o{ HOP_DONG_CAU_THU : "la doi chu quan"
-    DOI_BONG ||--o{ HOP_DONG_CAU_THU : "dang thi dau tai"
-    DOI_BONG ||--o{ TRAN_DAU : "la doi nha"
-    DOI_BONG ||--o{ TRAN_DAU : "la doi khach"
-    DOI_BONG ||--o{ DANG_KY_THI_DAU : "dang ky cau thu"
-    DOI_BONG ||--o{ SU_KIEN_TRAN_DAU : "doi bong cua su kien"
+    DOI_BONG ||--|{ MAU_AO_DOI_BONG : "sở hữu màu áo"
+    DOI_BONG ||--o{ HOP_DONG_CAU_THU : "đội chủ quản"
+    DOI_BONG ||--o{ HOP_DONG_CAU_THU : "đang thi đấu tại"
+    DOI_BONG ||--o{ TRAN_DAU : "đóng vai trò đội nhà"
+    DOI_BONG ||--o{ TRAN_DAU : "đóng vai trò đội khách"
+    DOI_BONG ||--o{ DANG_KY_THI_DAU : "đăng ký cầu thủ"
+    DOI_BONG ||--o{ SU_KIEN_TRAN_DAU : "đội ghi nhận"
 
-    CAU_THU ||--|{ HOP_DONG_CAU_THU : "ky ket hop dong"
-    CAU_THU ||--o{ DANG_KY_THI_DAU : "duoc dang ky"
-    CAU_THU ||--o{ SU_KIEN_TRAN_DAU : "tao ra su kien"
+    CAU_THU ||--|{ HOP_DONG_CAU_THU : "ký kết hợp đồng"
+    CAU_THU ||--o{ DANG_KY_THI_DAU : "được đăng ký thi đấu"
+    CAU_THU ||--o{ SU_KIEN_TRAN_DAU : "ghi bàn hoặc nhận thẻ"
 
-    VONG_DAU ||--|{ TRAN_DAU : "thuoc vong dau"
+    VONG_DAU ||--|{ TRAN_DAU : "thuộc vòng đấu"
 
-    TRAN_DAU ||--|{ PHAN_CONG_TRONG_TAI : "dieu khien boi"
-    TRAN_DAU ||--|{ DANG_KY_THI_DAU : "co danh sach dang ky"
-    TRAN_DAU ||--o{ SU_KIEN_TRAN_DAU : "dien ra cac su kien"
+    TRAN_DAU ||--|{ PHAN_CONG_TRONG_TAI : "được điều khiển bởi"
+    TRAN_DAU ||--|{ DANG_KY_THI_DAU : "có danh sách đăng ký"
+    TRAN_DAU ||--o{ SU_KIEN_TRAN_DAU : "diễn biến các sự kiện"
 
-    TRONG_TAI ||--o{ PHAN_CONG_TRONG_TAI : "duoc phan cong"
+    TRONG_TAI ||--o{ PHAN_CONG_TRONG_TAI : "được phân công nhiệm vụ"
 
     SAN_VAN_DONG {
-        string MaSan PK "Ma san van dong"
-        string TenSan "Ten san thi dau"
-        string DiaChi "Dia chi, thanh pho"
-        int SucChua "Suc chua khan gia"
+        string MaSan PK
+        string TenSan
+        string DiaChi
+        int SucChua
     }
 
     DOI_BONG {
-        string MaDoi PK "Ma doi bong"
-        string TenDoi "Ten cau lac bo"
-        string HLV "Huan luyen vien truong"
-        string MaSanNha FK "San nha co dinh"
+        string MaDoi PK
+        string TenDoi
+        string HLV
+        string MaSanNha FK
     }
 
     MAU_AO_DOI_BONG {
-        string MaDoi PK, FK "Ma doi bong"
-        string LoaiMauAo PK "SanNha, SanKhach, AoPhu"
-        string MoTaMau "Mo ta mau ao thi dau"
+        string MaDoi PK, FK
+        string LoaiMauAo PK
+        string MoTaMau
     }
 
     CAU_THU {
-        string MaCauThu PK "Ma dinh danh cau thu"
-        string HoTen "Ho va ten cau thu"
-        date NgaySinh "Ngay sinh"
-        string ViTri "ThuMon, HauVe, TienVe, TienDao"
-        string QuocTich "Quoc tich"
+        string MaCauThu PK
+        string HoTen
+        date NgaySinh
+        string ViTri
+        string QuocTich
     }
 
     HOP_DONG_CAU_THU {
-        string MaHD PK "Ma hop dong"
-        string MaCauThu FK "Ma cau thu"
-        string MaDoiChuQuan FK "Doi bong so huu"
-        string MaDoiHienTai FK "Doi bong dang thi dau"
-        int SoAo "So ao 1-35"
-        date NgayBatDau "Ngay bat dau hop dong"
-        date NgayKetThuc "Ngay ket thuc hop dong"
-        string TrangThai "ChinhThuc hoac ChoMuon"
-        decimal MucLuong "Muc luong thang"
+        string MaHD PK
+        string MaCauThu FK
+        string MaDoiChuQuan FK
+        string MaDoiHienTai FK
+        int SoAo
+        date NgayBatDau
+        date NgayKetThuc
+        string TrangThai
+        decimal MucLuong
     }
 
     TRONG_TAI {
-        string MaTrongTai PK "Ma dinh danh trong tai"
-        string HoTen "Ho va ten trong tai"
-        date NgaySinh "Ngay sinh"
-        string QueQuan "Que quan, tinh thanh"
-        string CapBac "FIFA, QuocGia"
+        string MaTrongTai PK
+        string HoTen
+        date NgaySinh
+        string QueQuan
+        string CapBac
     }
 
     VONG_DAU {
-        int MaVong PK "Ma vong dau 1-10"
-        string TenVong "Ten vong dau"
-        int ThuTu "Thu tu vong dau"
+        int MaVong PK
+        string TenVong
+        int ThuTu
     }
 
     TRAN_DAU {
-        string MaTran PK "Ma tran dau"
-        int MaVong FK "Thuoc vong dau"
-        string MaDoiNha FK "Doi nha"
-        string MaDoiKhach FK "Doi khach"
-        string MaSan FK "San thi dau"
-        datetime NgayGio "Thoi gian bat dau tran"
-        decimal GiaVe "Gia ve xem tran dau"
-        int SoKhach "So khan gia theo doi"
-        int BanThangNha "So ban doi nha ghi"
-        int BanThangKhach "So ban doi khach ghi"
-        int TheVangNha "So the vang doi nha"
-        int TheVangKhach "So the vang doi khach"
-        int TheDoNha "So the do doi nha"
-        int TheDoKhach "So the do doi khach"
-        string TrangThai "ChuaDienRa hoac DaKetThuc"
+        string MaTran PK
+        int MaVong FK
+        string MaDoiNha FK
+        string MaDoiKhach FK
+        string MaSan FK
+        datetime NgayGio
+        decimal GiaVe
+        int SoKhach
+        int BanThangNha
+        int BanThangKhach
+        int TheVangNha
+        int TheVangKhach
+        int TheDoNha
+        int TheDoKhach
+        string TrangThai
     }
 
     PHAN_CONG_TRONG_TAI {
-        string MaTran PK, FK "Ma tran dau"
-        string VaiTro PK "Chinh, Bien1, Bien2, Ban"
-        string MaTrongTai FK "Ma trong tai duoc gan"
+        string MaTran PK, FK
+        string VaiTro PK
+        string MaTrongTai FK
     }
 
     DANG_KY_THI_DAU {
-        string MaTran PK, FK "Ma tran dau"
-        string MaCauThu PK, FK "Ma cau thu dang ky"
-        string MaDoi FK "Doi bong dang ky"
-        string LoaiDangKy "ChinhThuc hoac DuBi"
-        int SoAoTran "So ao mac trong tran"
+        string MaTran PK, FK
+        string MaCauThu PK, FK
+        string MaDoi FK
+        string LoaiDangKy
+        int SoAoTran
     }
 
     SU_KIEN_TRAN_DAU {
-        string MaSuKien PK "Ma su kien tran"
-        string MaTran FK "Ma tran dau dien ra"
-        string MaCauThu FK "Cau thu tao su kien"
-        string MaDoi FK "Doi bong ghi nhan"
-        string LoaiSuKien "BanThang, TheVang, TheDo"
-        int PhutGhiNhan "Phut thu 1 den 120"
+        string MaSuKien PK
+        string MaTran FK
+        string MaCauThu FK
+        string MaDoi FK
+        string LoaiSuKien
+        int PhutGhiNhan
     }
 ```
 

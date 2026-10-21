@@ -1,20 +1,18 @@
 \chapter{CHUYỂN ĐỔI SANG LƯỢC ĐỒ QUAN HỆ VÀ CHUẨN HÓA BCNF}
 
-\section{Quy tắc ánh xạ từ Lược đồ E-R sang Mô hình Quan hệ}
+\section{Quy tắc ánh xạ từ lược đồ thực thể liên kết sang mô hình quan hệ}
 
-Quá trình chuyển đổi từ mô hình thực thể liên kết (E-R) sang mô hình dữ liệu quan hệ (Relational Model) được thực hiện tuân thủ theo các nguyên tắc chuẩn tắc của lý thuyết cơ sở dữ liệu:
+Quá trình chuyển đổi từ lược đồ thực thể liên kết sang các lược đồ quan hệ được thực hiện theo các quy tắc sau:
 \begin{enumerate}
-    \item \textbf{Ánh xạ tập thực thể mạnh}: Mỗi tập thực thể mạnh độc lập (\texttt{SAN\_VAN\_DONG}, \texttt{DOI\_BONG}, \texttt{CAU\_THU}, \texttt{TRONG\_TAI}, \texttt{VONG\_DAU}) chuyển đổi thành một quan hệ độc lập. Khóa chính của thực thể trở thành khóa chính (PK) của quan hệ.
-    \item \textbf{Ánh xạ mối kết hợp $1 - N$}: Mối kết hợp một - nhiều được chuyển đổi bằng cách lấy khóa chính của thực thể phía bên một ($1$) đưa vào làm thuộc tính khóa ngoại (FK) tại quan hệ phía bên nhiều ($N$). Ví dụ: Thuộc tính \texttt{MaSanNha} (FK) trong quan hệ \texttt{DOI\_BONG} tham chiếu đến \texttt{MaSan} trong \texttt{SAN\_VAN\_DONG}.
-    \item \textbf{Ánh xạ thuộc tính đa trị và thực thể yếu}: Thuộc tính màu áo của đội bóng (mỗi đội có $\ge 2$ màu áo) được ánh xạ thành quan hệ \texttt{MAU\_AO\_DOI\_BONG}. Khóa chính tổ hợp gồm khóa ngoại của thực thể chủ \texttt{MaDoi} và thuộc tính phân biệt \texttt{LoaiMauAo}.
-    \item \textbf{Ánh xạ mối kết hợp $N - N$}: Mối kết hợp nhiều - nhiều giữa \texttt{TRAN\_DAU} và \texttt{TRONG\_TAI} được tách thành quan hệ trung gian \texttt{PHAN\_CONG\_TRONG\_TAI} với khóa chính tổ hợp gồm \texttt{MaTran} và \texttt{VaiTro}. Tương tự, danh sách thi đấu được biểu diễn qua quan hệ \texttt{DANG\_KY\_THI\_DAU}.
+    \item \textbf{Ánh xạ tập thực thể mạnh}: Mỗi tập thực thể mạnh gồm \texttt{SAN\_VAN\_DONG}, \texttt{DOI\_BONG}, \texttt{CAU\_THU}, \texttt{TRONG\_TAI}, \texttt{VONG\_DAU} được chuyển thành một quan hệ độc lập. Khóa chính của thực thể trở thành khóa chính của quan hệ tương ứng.
+    \item \textbf{Ánh xạ mối kết hợp một -- nhiều}: Được chuyển đổi bằng cách lấy thuộc tính khóa chính của quan hệ phía bên một đưa vào làm thuộc tính khóa ngoại tại quan hệ phía bên nhiều. Ví dụ: Thuộc tính \texttt{MaSanNha} trong quan hệ \texttt{DOI\_BONG} là khóa ngoại tham chiếu đến khóa chính \texttt{MaSan} của quan hệ \texttt{SAN\_VAN\_DONG}.
+    \item \textbf{Ánh xạ thuộc tính đa trị và thực thể yếu}: Thuộc tính màu áo của đội bóng được tách thành bảng riêng \texttt{MAU\_AO\_DOI\_BONG}. Khóa chính tổ hợp gồm thuộc tính khóa của đội bóng \texttt{MaDoi} và thuộc tính phân biệt \texttt{LoaiMauAo}.
+    \item \textbf{Ánh xạ mối kết hợp nhiều -- nhiều}: Mối kết hợp nhiều -- nhiều giữa \texttt{TRAN\_DAU} và \texttt{TRONG\_TAI} được tách thành quan hệ trung gian \texttt{PHAN\_CONG\_TRONG\_TAI} với khóa chính tổ hợp gồm \texttt{MaTran} và \texttt{VaiTro}. Tương tự, danh sách thi đấu được biểu diễn qua quan hệ \texttt{DANG\_KY\_THI\_DAU}.
 \end{enumerate}
 
----
+\section{Tập hợp các lược đồ quan hệ và liên kết khóa}
 
-\section{Tập hợp các Lược đồ Quan hệ và Liên kết Khóa}
-
-Sau quá trình ánh xạ, hệ thống bao gồm 11 lược đồ quan hệ. Ký hiệu quy ước: Các thuộc tính \underline{\textbf{in đậm gạch chân}} biểu diễn \textbf{Khóa chính (PK)}, các thuộc tính \textit{in nghiêng} biểu diễn \textbf{Khóa ngoại (FK)}.
+Sau khi ánh xạ, hệ thống gồm 11 lược đồ quan hệ. Ký hiệu quy ước: Thuộc tính \underline{\textbf{in đậm gạch chân}} là khóa chính, thuộc tính \textit{in nghiêng} là khóa ngoại.
 
 \begin{enumerate}
     \item $\text{SAN\_VAN\_DONG}(\underline{\mathbf{MaSan}}, \text{TenSan}, \text{DiaChi}, \text{SucChua})$
@@ -59,39 +57,12 @@ Sau quá trình ánh xạ, hệ thống bao gồm 11 lược đồ quan hệ. K�
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{Figures/RSD.png}
+	\includegraphics[angle=90, width=0.7\textheight, keepaspectratio]{Figures/RSD.png}
     \caption{Sơ đồ cấu trúc lược đồ quan hệ và mối liên kết khóa}
     \label{fig:relational_diagram}
 \end{figure}
 
-
----
-
-\section{Cơ sở lý thuyết Phụ thuộc hàm và Dạng chuẩn BCNF}
-
-\subsection{Khái niệm Phụ thuộc hàm}
-Cho lược đồ quan hệ $R(U)$ với tập thuộc tính $U$ và $X, Y \subseteq U$. Một \textbf{phụ thuộc hàm (Functional Dependency - FD)}, ký hiệu $X \rightarrow Y$, biểu thị rằng: với mọi bộ giá trị $t_1, t_2$ trong quan hệ $r(R)$, nếu $t_1[X] = t_2[X]$ thì bắt buộc $t_1[Y] = t_2[Y]$.
-\begin{itemize}
-    \item Phụ thuộc hàm được gọi là \textit{tầm thường} nếu $Y \subseteq X$.
-    \item Phụ thuộc hàm được gọi là \textit{không tầm thường} nếu $Y \not\subseteq X$.
-\end{itemize}
-
-\subsection{Bao đóng thuộc tính và Khóa ứng viên}
-Cho tập phụ thuộc hàm $F$. Bao đóng của tập thuộc tính $X$ dưới tập $F$, ký hiệu $X^+$, là tập hợp tất cả các thuộc tính $A \in U$ sao cho phụ thuộc hàm $X \rightarrow A$ được suy dẫn logic từ $F$ (dựa trên hệ tiên đề Armstrong).
-\begin{itemize}
-    \item Tập thuộc tính $X$ là một \textbf{siêu khóa (Superkey)} của quan hệ $R(U)$ nếu $X^+ = U$.
-    \item Tập thuộc tính $X$ là một \textbf{khóa ứng viên (Candidate Key)} nếu $X$ là siêu khóa và không tồn tại bất kỳ tập con thực sự $X' \subset X$ nào sao cho $X'^+ = U$ (tính tối thiểu).
-\end{itemize}
-
-\subsection{Định nghĩa Dạng chuẩn Boyce-Codd (BCNF)}
-Một lược đồ quan hệ $R(U)$ cùng với tập phụ thuộc hàm $F$ được gọi là đạt \textbf{Dạng chuẩn Boyce-Codd (BCNF)} nếu và chỉ nếu:
-$$\forall (X \rightarrow Y) \in F^+ \text{ với } Y \not\subseteq X \implies X \text{ là một siêu khóa của } R.$$
-
-Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, loại bỏ triệt để mọi dư thừa dữ liệu có thể suy diễn từ phụ thuộc hàm. Mọi quan hệ đạt BCNF mặc nhiên đạt dạng chuẩn 3NF, 2NF và 1NF.
-
----
-
-\section{Xác định Phụ thuộc hàm và Chứng minh Chuẩn BCNF cho từng Lược đồ}
+\section{Xác định phụ thuộc hàm và chứng minh chuẩn BCNF cho từng lược đồ}
 
 \subsection{Quan hệ SAN\_VAN\_DONG}
 \begin{itemize}
@@ -104,7 +75,7 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
     \item Xác định khóa ứng viên:
     $$\text{MaSan}^+ = U \implies \text{MaSan} \text{ là khóa ứng viên.}$$
     $$\text{TenSan}^+ = U \implies \text{TenSan} \text{ là khóa ứng viên.}$$
-    \item Kiểm tra BCNF:
+    \item Kiểm tra điều kiện BCNF:
     \begin{itemize}
         \item Xét $f_{1.1}$: Vế trái $\text{MaSan}$ là siêu khóa.
         \item Xét $f_{1.2}$: Vế trái $\text{TenSan}$ là siêu khóa.
@@ -120,8 +91,8 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
         f_{2.1}: & \quad \text{MaDoi} \rightarrow \{\text{TenDoi}, \text{HLV}, \text{MaSanNha}\} \\
         f_{2.2}: & \quad \text{TenDoi} \rightarrow \{\text{MaDoi}, \text{HLV}, \text{MaSanNha}\}
     \end{align*}
-    \item Xác định khóa: Khóa ứng viên là $\{\text{MaDoi}\}$ và $\{\text{TenDoi}\}$.
-    \item Kiểm tra BCNF: Cả hai vế trái $\text{MaDoi}$ và $\text{TenDoi}$ đều là siêu khóa của quan hệ.
+    \item Xác định khóa: Khóa ứng viên gồm $\{\text{MaDoi}\}$ và $\{\text{TenDoi}\}$.
+    \item Kiểm tra điều kiện BCNF: Cả hai vế trái $\text{MaDoi}$ và $\text{TenDoi}$ đều là siêu khóa của quan hệ.
     \item \textbf{Kết luận}: Quan hệ \texttt{DOI\_BONG} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -131,7 +102,7 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
     \item Tập phụ thuộc hàm $F_3$:
     $$f_{3.1}: \quad \{\text{MaDoi}, \text{LoaiMauAo}\} \rightarrow \text{MoTaMau}$$
     \item Khóa ứng viên: $K = \{\text{MaDoi}, \text{LoaiMauAo}\}$ do $\{\text{MaDoi}, \text{LoaiMauAo}\}^+ = U$.
-    \item Kiểm tra BCNF: Vế trái của phụ thuộc hàm duy nhất $f_{3.1}$ chính là khóa chính (siêu khóa).
+    \item Kiểm tra điều kiện BCNF: Vế trái của phụ thuộc hàm $f_{3.1}$ là khóa chính của quan hệ.
     \item \textbf{Kết luận}: Quan hệ \texttt{MAU\_AO\_DOI\_BONG} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -141,7 +112,7 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
     \item Tập phụ thuộc hàm $F_4$:
     $$f_{4.1}: \quad \text{MaCauThu} \rightarrow \{\text{HoTen}, \text{NgaySinh}, \text{ViTri}, \text{QuocTich}\}$$
     \item Khóa ứng viên: $K = \{\text{MaCauThu}\}$.
-    \item Kiểm tra BCNF: Vế trái $\text{MaCauThu}$ là siêu khóa duy nhất.
+    \item Kiểm tra điều kiện BCNF: Vế trái $\text{MaCauThu}$ là siêu khóa.
     \item \textbf{Kết luận}: Quan hệ \texttt{CAU\_THU} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -151,7 +122,7 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
     \item Tập phụ thuộc hàm $F_5$:
     $$f_{5.1}: \quad \text{MaHD} \rightarrow \{\text{MaCauThu}, \text{MaDoiChuQuan}, \text{MaDoiHienTai}, \text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai}, \text{MucLuong}\}$$
     \item Khóa ứng viên: $K = \{\text{MaHD}\}$.
-    \item Kiểm tra BCNF: Vế trái $\text{MaHD}$ là siêu khóa. Không có phụ thuộc bắc cầu hay phụ thuộc một phần.
+    \item Kiểm tra điều kiện BCNF: Vế trái $\text{MaHD}$ là siêu khóa duy nhất.
     \item \textbf{Kết luận}: Quan hệ \texttt{HOP\_DONG\_CAU\_THU} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -161,7 +132,7 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
     \item Tập phụ thuộc hàm $F_6$:
     $$f_{6.1}: \quad \text{MaTrongTai} \rightarrow \{\text{HoTen}, \text{NgaySinh}, \text{QueQuan}, \text{CapBac}\}$$
     \item Khóa ứng viên: $K = \{\text{MaTrongTai}\}$.
-    \item Kiểm tra BCNF: Vế trái $\text{MaTrongTai}$ là siêu khóa.
+    \item Kiểm tra điều kiện BCNF: Vế trái $\text{MaTrongTai}$ là siêu khóa.
     \item \textbf{Kết luận}: Quan hệ \texttt{TRONG\_TAI} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -174,7 +145,7 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
         f_{7.2}: & \quad \text{ThuTu} \rightarrow \{\text{MaVong}, \text{TenVong}\}
     \end{align*}
     \item Khóa ứng viên: $K_1 = \{\text{MaVong}\}$, $K_2 = \{\text{ThuTu}\}$.
-    \item Kiểm tra BCNF: Vế trái của mọi phụ thuộc hàm không tầm thường đều là siêu khóa.
+    \item Kiểm tra điều kiện BCNF: Vế trái của cả hai phụ thuộc hàm đều là siêu khóa.
     \item \textbf{Kết luận}: Quan hệ \texttt{VONG\_DAU} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -187,9 +158,9 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
         f_{8.1}: & \quad \text{MaTran} \rightarrow U \setminus \{\text{MaTran}\} \\
         f_{8.2}: & \quad \{\text{MaDoiNha}, \text{MaDoiKhach}\} \rightarrow U \setminus \{\text{MaDoiNha}, \text{MaDoiKhach}\}
     \end{align*}
-    \textit{(Do thể thức vòng tròn 2 lượt quy định mỗi cặp đối đầu sân nhà - sân khách chỉ diễn ra duy nhất 1 trận trong mùa giải)}.
+    (Do mỗi cặp đối đầu sân nhà -- sân khách chỉ diễn ra duy nhất một trận trong cả mùa giải).
     \item Khóa ứng viên: $K_1 = \{\text{MaTran}\}$, $K_2 = \{\text{MaDoiNha}, \text{MaDoiKhach}\}$.
-    \item Kiểm tra BCNF: Cả hai vế trái $\text{MaTran}$ và $\{\text{MaDoiNha}, \text{MaDoiKhach}\}$ đều là siêu khóa.
+    \item Kiểm tra điều kiện BCNF: Cả hai vế trái $\text{MaTran}$ và $\{\text{MaDoiNha}, \text{MaDoiKhach}\}$ đều là siêu khóa.
     \item \textbf{Kết luận}: Quan hệ \texttt{TRAN\_DAU} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -201,9 +172,9 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
         f_{9.1}: & \quad \{\text{MaTran}, \text{VaiTro}\} \rightarrow \text{MaTrongTai} \\
         f_{9.2}: & \quad \{\text{MaTran}, \text{MaTrongTai}\} \rightarrow \text{VaiTro}
     \end{align*}
-    \textit{(Một trận đấu với 1 vai trò chỉ có đúng 1 trọng tài; và trong 1 trận, 1 trọng tài chỉ đảm nhiệm tối đa 1 vai trò)}.
+    (Trong một trận đấu, mỗi vai trò chỉ có đúng một trọng tài; và mỗi trọng tài chỉ đảm nhiệm tối đa một vai trò).
     \item Khóa ứng viên: $K_1 = \{\text{MaTran}, \text{VaiTro}\}$, $K_2 = \{\text{MaTran}, \text{MaTrongTai}\}$.
-    \item Kiểm tra BCNF: Vế trái của $f_{9.1}$ và $f_{9.2}$ đều là siêu khóa của quan hệ.
+    \item Kiểm tra điều kiện BCNF: Vế trái của $f_{9.1}$ và $f_{9.2}$ đều là siêu khóa của quan hệ.
     \item \textbf{Kết luận}: Quan hệ \texttt{PHAN\_CONG\_TRONG\_TAI} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -213,7 +184,7 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
     \item Tập phụ thuộc hàm $F_{10}$:
     $$f_{10.1}: \quad \{\text{MaTran}, \text{MaCauThu}\} \rightarrow \{\text{MaDoi}, \text{LoaiDangKy}, \text{SoAoTran}\}$$
     \item Khóa ứng viên: $K = \{\text{MaTran}, \text{MaCauThu}\}$.
-    \item Kiểm tra BCNF: Vế trái $\{\text{MaTran}, \text{MaCauThu}\}$ là siêu khóa duy nhất.
+    \item Kiểm tra điều kiện BCNF: Vế trái $\{\text{MaTran}, \text{MaCauThu}\}$ là siêu khóa duy nhất.
     \item \textbf{Kết luận}: Quan hệ \texttt{DANG\_KY\_THI\_DAU} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -223,50 +194,47 @@ Dạng chuẩn BCNF là một trong những dạng chuẩn khắt khe nhất, lo
     \item Tập phụ thuộc hàm $F_{11}$:
     $$f_{11.1}: \quad \text{MaSuKien} \rightarrow \{\text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}$$
     \item Khóa ứng viên: $K = \{\text{MaSuKien}\}$.
-    \item Kiểm tra BCNF: Vế trái $\text{MaSuKien}$ là khóa chính (siêu khóa).
+    \item Kiểm tra điều kiện BCNF: Vế trái $\text{MaSuKien}$ là siêu khóa.
     \item \textbf{Kết luận}: Quan hệ \texttt{SU\_KIEN\_TRAN\_DAU} đạt dạng chuẩn \textbf{BCNF}.
 \end{itemize}
 
----
+% \section{Phân tích thuật toán tách chuẩn BCNF}
 
-\section{Phân tích Thuật toán Tách chuẩn BCNF (Phản ví dụ thực tế)}
+% Mục này trình bày một ví dụ thiết kế chưa chuẩn hóa và các bước áp dụng thuật toán tách để đưa quan hệ về dạng chuẩn BCNF.
 
-Để chứng minh tính chuẩn xác và chiều sâu học thuật của mô hình thiết kế, mục này trình bày một ví dụ thiết kế chưa chuẩn hóa và áp dụng từng bước của **Thuật toán tách chuẩn BCNF (BCNF Decomposition Algorithm)**.
+% \subsection{Tình huống thiết kế vi phạm chuẩn hóa}
+% Giả sử người thiết kế gộp chung thông tin của Trận đấu và Sân vận động vào trong một bảng duy nhất:
+% $$R_{\text{Gop}}(\underline{\text{MaTran}}, \text{NgayGio}, \text{MaSan}, \text{TenSan}, \text{DiaChi}, \text{SucChua})$$
 
-\subsection{Tình huống thiết kế vi phạm chuẩn hóa}
-Giả sử người thiết kế gộp chung thông tin của Trận đấu và Sân vận động vào trong một bảng duy nhất:
-$$R_{\text{Gop}}(\underline{\text{MaTran}}, \text{NgayGio}, \text{MaSan}, \text{TenSan}, \text{DiaChi}, \text{SucChua})$$
+% Tập phụ thuộc hàm trên $R_{\text{Gop}}$ gồm:
+% \begin{align*}
+%     f_1: & \quad \text{MaTran} \rightarrow \{\text{NgayGio}, \text{MaSan}, \text{TenSan}, \text{DiaChi}, \text{SucChua}\} \\
+%     f_2: & \quad \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\}
+% \end{align*}
 
-Tập phụ thuộc hàm trên $R_{\text{Gop}}$ gồm có:
-\begin{align*}
-    f_1: & \quad \text{MaTran} \rightarrow \{\text{NgayGio}, \text{MaSan}, \text{TenSan}, \text{DiaChi}, \text{SucChua}\} \\
-    f_2: & \quad \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\}
-\end{align*}
+% \paragraph{Phân tích vi phạm BCNF:}
+% \begin{itemize}
+%     \item Khóa chính duy nhất của $R_{\text{Gop}}$ là $\{\text{MaTran}\}$.
+%     \item Xét phụ thuộc hàm $f_2: \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\}$. Vế trái $\text{MaSan}$ không phải là siêu khóa của $R_{\text{Gop}}$ (vì bao đóng của $\text{MaSan}$ không chứa thuộc tính $\text{MaTran}$ và $\text{NgayGio}$).
+%     \item Do đó, quan hệ $R_{\text{Gop}}$ vi phạm định nghĩa dạng chuẩn BCNF và vi phạm dạng chuẩn 3 do tồn tại phụ thuộc bắc cầu.
+%     \item Hậu quả là thông tin tên sân, địa chỉ, sức chứa bị lặp lại ở mọi trận đấu diễn ra trên sân đó, dẫn đến các dị thường khi thêm, sửa hoặc xóa dữ liệu.
+% \end{itemize}
 
-\paragraph{Phân tích vi phạm BCNF:}
-\begin{itemize}
-    \item Khóa chính duy nhất của $R_{\text{Gop}}$ là $\{\text{MaTran}\}$.
-    \item Xét phụ thuộc hàm $f_2: \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\}$. Vế trái $\text{MaSan}$ \textbf{không phải là siêu khóa} của $R_{\text{Gop}}$ (vì $\text{MaSan}^+ = \{\text{MaSan}, \text{TenSan}, \text{DiaChi}, \text{SucChua}\} \neq U$).
-    \item Do đó, quan hệ $R_{\text{Gop}}$ vi phạm nghiêm trọng định nghĩa BCNF (và cũng vi phạm 3NF do phụ thuộc bắc cầu).
-    \item \textbf{Hậu quả thực tế}: Thông tin tên sân, địa chỉ, sức chứa bị lặp đi lặp lại ở mọi trận đấu diễn ra trên sân đó; khi sân vận động thay đổi sức chứa thì phải cập nhật nhiều dòng; nếu chưa có trận đấu nào trên sân thì không thể lưu thông tin sân (Dị thường thêm, sửa, xóa).
-\end{itemize}
+% \subsection{Các bước thực hiện thuật toán tách BCNF}
+% Thuật toán tách được thực hiện như sau:
+% \begin{itemize}
+%     \item \textbf{Bước 1}: Chọn phụ thuộc hàm vi phạm điều kiện BCNF là $f_2: \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\}$.
+%     \item \textbf{Bước 2}: Tách $R_{\text{Gop}}$ thành hai lược đồ quan hệ con $R_1$ và $R_2$:
+%     $$R_1 = \{\underline{\mathbf{MaSan}}, \text{TenSan}, \text{DiaChi}, \text{SucChua}\} \equiv \text{SAN\_VAN\_DONG}$$
+%     $$R_2 = \{\underline{\mathbf{MaTran}}, \text{NgayGio}, \textit{MaSan}\} \equiv \text{TRAN\_DAU\_RUT\_GON}$$
+%     \item \textbf{Bước 3}: Kiểm tra các tính chất của phép tách:
+%     \begin{enumerate}
+%         \item \textit{Tính kết nối không mất mát thông tin}:
+%         Giao của hai quan hệ là $R_1 \cap R_2 = \{\text{MaSan}\}$. Vì $\text{MaSan}$ là khóa chính của $R_1$ nên phép tách bảo toàn toàn bộ dữ liệu ban đầu:
+%         $$R_{\text{Gop}} = R_1 \bowtie R_2.$$
+%         \item \textit{Tính bảo toàn phụ thuộc hàm}: Các phụ thuộc hàm trong tập ban đầu đều được duy trì trong các bảng con.
+%         \item \textit{Kiểm tra lại điều kiện BCNF}: Cả hai quan hệ $R_1$ và $R_2$ đều thỏa mãn dạng chuẩn BCNF.
+%     \end{enumerate}
+% \end{itemize}
 
-\subsection{Các bước thực thi thuật toán tách BCNF}
-Thuật toán tách chuẩn BCNF tiến hành như sau:
-\begin{itemize}
-    \item \textbf{Bước 1}: Tìm một phụ thuộc hàm $X \rightarrow Y$ vi phạm điều kiện BCNF. Ta chọn $f_2: \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\}$.
-    \item \textbf{Bước 2}: Phân rã $R_{\text{Gop}}$ thành hai lược đồ quan hệ con $R_1$ và $R_2$:
-    $$R_1 = X \cup Y = \{\underline{\mathbf{MaSan}}, \text{TenSan}, \text{DiaChi}, \text{SucChua}\} \equiv \text{SAN\_VAN\_DONG}$$
-    $$R_2 = R_{\text{Gop}} \setminus (Y \setminus X) = \{\underline{\mathbf{MaTran}}, \text{NgayGio}, \textit{MaSan}\} \equiv \text{TRAN\_DAU\_RUT\_GON}$$
-    \item \textbf{Bước 3}: Kiểm tra tính chất của phép phân rã:
-    \begin{enumerate}
-        \item \textit{Tính kết nối không mất mát thông tin (Lossless Join)}:
-        $$R_1 \cap R_2 = \{\text{MaSan}\}$$
-        Vì $\text{MaSan} \rightarrow R_1$ nên giao $R_1 \cap R_2$ là siêu khóa của $R_1$. Theo định lý kết nối không mất mát, phép phân rã bảo toàn $100\%$ dữ liệu ban đầu:
-        $$R_{\text{Gop}} = R_1 \bowtie R_2.$$
-        \item \textit{Tính bảo toàn phụ thuộc hàm}: Mọi phụ thuộc hàm trong tập $F$ ban đầu đều được duy trì trong các bảng phân rã con.
-        \item \textit{Kiểm tra lại BCNF}: Cả $R_1$ và $R_2$ đều thỏa mãn điều kiện BCNF.
-    \end{enumerate}
-\end{itemize}
-
-Kết quả chứng minh rằng toàn bộ 11 bảng của hệ thống được thiết kế hoàn toàn tối ưu, loại bỏ triệt để mọi nguy cơ dị thường dữ liệu.
+% Kết quả này cho thấy việc tách các thực thể theo mô hình thiết kế đã loại bỏ hoàn toàn dư thừa dữ liệu.
