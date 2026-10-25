@@ -1,17 +1,20 @@
 -- ============================================================================
 -- PHẦN 2: CÀI ĐẶT 5 TRIGGER BẮT BUỘC KIỂM TRA TOÀN VẸN NGHIỆP VỤ
--- HỆ QUẢN TRỊ: PostgreSQL (PL/pgSQL)
+-- HỆ QUẢN TRỊ: PostgreSQL (PL/pgSQL) - Đảm bảo kiểm soát đồng thời (MVCC Locking)
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
 -- TRIGGER 1: KIỂM TRA SỐ ÁO CẦU THỦ DUY NHẤT TRONG CÙNG MỘT ĐỘI BÓNG
--- Nghiệp vụ: Các cầu thủ trong cùng một đội không được trùng số áo.
+-- Nghiệp vụ: Các cầu thủ trong cùng một đội không được trùng số áo trong cùng thời kỳ.
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION fn_check_so_ao_duy_nhat()
 RETURNS TRIGGER AS $$
 DECLARE
     v_trung_so_ao INT;
 BEGIN
+    -- Khóa bản ghi đội bóng cha để tuần tự hóa các giao dịch đồng thời cùng đăng ký vào đội
+    PERFORM 1 FROM DOI_BONG WHERE MaDoi = NEW.MaDoiHienTai FOR NO KEY UPDATE;
+
     SELECT COUNT(*) INTO v_trung_so_ao
     FROM HOP_DONG_CAU_THU
     WHERE MaDoiHienTai = NEW.MaDoiHienTai
@@ -46,6 +49,9 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_so_luong INT;
 BEGIN
+    -- Khóa bản ghi đội bóng cha để ngăn chặn hiện tượng đọc bóng ma (Phantom Read) khi thêm đồng thời
+    PERFORM 1 FROM DOI_BONG WHERE MaDoi = NEW.MaDoiHienTai FOR NO KEY UPDATE;
+
     SELECT COUNT(*) INTO v_so_luong
     FROM HOP_DONG_CAU_THU
     WHERE MaDoiHienTai = NEW.MaDoiHienTai
@@ -79,6 +85,9 @@ DECLARE
     v_ma_vong INT;
     v_so_tran INT;
 BEGIN
+    -- Khóa bản ghi trọng tài để tuần tự hóa việc phân công đồng thời cho cùng một trọng tài
+    PERFORM 1 FROM TRONG_TAI WHERE MaTrongTai = NEW.MaTrongTai FOR NO KEY UPDATE;
+
     -- Lấy mã vòng đấu của trận đấu đang được phân công
     SELECT MaVong INTO v_ma_vong
     FROM TRAN_DAU
@@ -118,6 +127,9 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_so_cau_thu_da_dang_ky INT;
 BEGIN
+    -- Khóa bản ghi trận đấu để ngăn chặn điều kiện tranh chấp (Race Condition) khi 2 cán bộ cùng đăng ký
+    PERFORM 1 FROM TRAN_DAU WHERE MaTran = NEW.MaTran FOR NO KEY UPDATE;
+
     SELECT COUNT(*) INTO v_so_cau_thu_da_dang_ky
     FROM DANG_KY_THI_DAU
     WHERE MaTran = NEW.MaTran
@@ -157,45 +169,36 @@ DECLARE
 BEGIN
     -- Chỉ kiểm tra khi trận đấu được chuyển sang trạng thái đã kết thúc
     IF NEW.TrangThai = 'DaKetThuc' THEN
-        -- Đếm sự kiện bàn thắng
-        SELECT COUNT(*) INTO v_ban_nha
-        FROM SU_KIEN_TRAN_DAU
-        WHERE MaTran = NEW.MaTran AND MaDoi = NEW.MaDoiNha AND LoaiSuKien = 'BanThang';
-
-        SELECT COUNT(*) INTO v_ban_khach
-        FROM SU_KIEN_TRAN_DAU
-        WHERE MaTran = NEW.MaTran AND MaDoi = NEW.MaDoiKhach AND LoaiSuKien = 'BanThang';
-
-        -- Đếm sự kiện thẻ vàng
-        SELECT COUNT(*) INTO v_the_vang_nha
-        FROM SU_KIEN_TRAN_DAU
-        WHERE MaTran = NEW.MaTran AND MaDoi = NEW.MaDoiNha AND LoaiSuKien = 'TheVang';
-
-        SELECT COUNT(*) INTO v_the_vang_khach
-        FROM SU_KIEN_TRAN_DAU
-        WHERE MaTran = NEW.MaTran AND MaDoi = NEW.MaDoiKhach AND LoaiSuKien = 'TheVang';
-
-        -- Đếm sự kiện thẻ đỏ
-        SELECT COUNT(*) INTO v_the_do_nha
-        FROM SU_KIEN_TRAN_DAU
-        WHERE MaTran = NEW.MaTran AND MaDoi = NEW.MaDoiNha AND LoaiSuKien = 'TheDo';
-
-        SELECT COUNT(*) INTO v_the_do_khach
-        FROM SU_KIEN_TRAN_DAU
-        WHERE MaTran = NEW.MaTran AND MaDoi = NEW.MaDoiKhach AND LoaiSuKien = 'TheDo';
+        -- Thực hiện một truy vấn tổng hợp duy nhất kết nối với DANG_KY_THI_DAU (đã chuẩn hóa BCNF)
+        SELECT
+            COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiNha AND sk.LoaiSuKien = 'BanThang'),
+            COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiKhach AND sk.LoaiSuKien = 'BanThang'),
+            COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiNha AND sk.LoaiSuKien = 'TheVang'),
+            COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiKhach AND sk.LoaiSuKien = 'TheVang'),
+            COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiNha AND sk.LoaiSuKien = 'TheDo'),
+            COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiKhach AND sk.LoaiSuKien = 'TheDo')
+        INTO
+            v_ban_nha, v_ban_khach,
+            v_the_vang_nha, v_the_vang_khach,
+            v_the_do_nha, v_the_do_khach
+        FROM SU_KIEN_TRAN_DAU sk
+        JOIN DANG_KY_THI_DAU dk ON sk.MaTran = dk.MaTran AND sk.MaCauThu = dk.MaCauThu
+        WHERE sk.MaTran = NEW.MaTran;
 
         -- So sánh đối chiếu với số liệu trận đấu
         IF v_ban_nha <> NEW.BanThangNha OR v_ban_khach <> NEW.BanThangKhach THEN
-            RAISE EXCEPTION 'Lỗi toàn vẹn dữ liệu: Số bàn thắng trong bảng sự kiện (Nhà: %, Khách: %) không khớp với tỉ số trận đấu (Nhà: %, Khách: %)!',
-                v_ban_nha, v_ban_khach, NEW.BanThangNha, NEW.BanThangKhach;
+            RAISE EXCEPTION 'Lỗi toàn vẹn dữ liệu tại trận %: Số bàn thắng trong bảng sự kiện (Nhà: %, Khách: %) không khớp với tỉ số trận đấu (Nhà: %, Khách: %)!',
+                NEW.MaTran, v_ban_nha, v_ban_khach, NEW.BanThangNha, NEW.BanThangKhach;
         END IF;
 
         IF v_the_vang_nha <> NEW.TheVangNha OR v_the_vang_khach <> NEW.TheVangKhach THEN
-            RAISE EXCEPTION 'Lỗi toàn vẹn dữ liệu: Số thẻ vàng trong bảng sự kiện không khớp với tổng thẻ vàng của trận đấu!';
+            RAISE EXCEPTION 'Lỗi toàn vẹn dữ liệu tại trận %: Số thẻ vàng trong bảng sự kiện (Nhà: %, Khách: %) không khớp với tổng thẻ vàng trận đấu (Nhà: %, Khách: %)!',
+                NEW.MaTran, v_the_vang_nha, v_the_vang_khach, NEW.TheVangNha, NEW.TheVangKhach;
         END IF;
 
         IF v_the_do_nha <> NEW.TheDoNha OR v_the_do_khach <> NEW.TheDoKhach THEN
-            RAISE EXCEPTION 'Lỗi toàn vẹn dữ liệu: Số thẻ đỏ trong bảng sự kiện không khớp với tổng thẻ đỏ của trận đấu!';
+            RAISE EXCEPTION 'Lỗi toàn vẹn dữ liệu tại trận %: Số thẻ đỏ trong bảng sự kiện (Nhà: %, Khách: %) không khớp với tổng thẻ đỏ trận đấu (Nhà: %, Khách: %)!',
+                NEW.MaTran, v_the_do_nha, v_the_do_khach, NEW.TheDoNha, NEW.TheDoKhach;
         END IF;
     END IF;
 

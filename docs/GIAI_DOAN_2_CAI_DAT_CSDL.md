@@ -35,47 +35,44 @@ Tất cả các tệp mã nguồn SQL đã được đóng gói tại thư mục
 
 ## 2. CÀI ĐẶT CẤU TRÚC CÁC BẢNG VÀ RÀNG BUỘC DDL
 
-Cơ sở dữ liệu gồm 11 bảng được liên kết chặt chẽ:
-1. `SAN_VAN_DONG`: Quản lý sân thi đấu (`MaSan`, `TenSan`, `DiaChi`, `SucChua`). Sân Hàng Đẫy (`SAN_HD`) là sân nhà của cả Hà Nội FC và Công An Hà Nội.
+Cơ sở dữ liệu gồm 11 bảng đạt chuẩn BCNF được liên kết chặt chẽ:
+1. `SAN_VAN_DONG`: Quản lý sân thi đấu (`MaSan`, `TenSan`, `DiaChi`, `SucChua`, `KhuVuc`). Sân Hàng Đẫy (`SAN_HD`) là sân nhà của cả Hà Nội FC và Công An Hà Nội.
 2. `DOI_BONG`: Quản lý câu lạc bộ (`MaDoi`, `TenDoi`, `HLV`, `MaSanNha`).
 3. `MAU_AO_DOI_BONG`: Quản lý các màu áo của đội bóng (`MaDoi`, `LoaiMauAo`, `MoTaMau`).
 4. `CAU_THU`: Quản lý nhân thân cầu thủ (`MaCauThu`, `HoTen`, `NgaySinh`, `ViTri`, `QuocTich`).
-5. `HOP_DONG_CAU_THU`: Quản lý hợp đồng thi đấu và cho mượn (`MaHD`, `MaCauThu`, `MaDoiChuQuan`, `MaDoiHienTai`, `SoAo`, `NgayBatDau`, `NgayKetThuc`, `TrangThai`, `MucLuong`). Ràng buộc số áo từ 1 đến 35.
+5. `HOP_DONG_CAU_THU`: Quản lý hợp đồng thi đấu và cho mượn (`MaHD`, `MaCauThu`, `MaDoiChuQuan`, `MaDoiHienTai`, `SoAo`, `NgayBatDau`, `NgayKetThuc`, `TrangThai`). Khóa ứng viên trên `(MaCauThu, MaDoiHienTai)` và `(MaDoiHienTai, SoAo)`.
 6. `TRONG_TAI`: Quản lý thông tin trọng tài (`MaTrongTai`, `HoTen`, `NgaySinh`, `QueQuan`, `CapBac`).
 7. `VONG_DAU`: Danh mục 10 vòng đấu (`MaVong`, `TenVong`, `ThuTu`).
 8. `TRAN_DAU`: Quản lý các trận đấu (`MaTran`, `MaVong`, `MaDoiNha`, `MaDoiKhach`, `MaSan`, `NgayGio`, `GiaVe`, `SoKhach`, `BanThangNha`, `BanThangKhach`, `TheVangNha`, `TheVangKhach`, `TheDoNha`, `TheDoKhach`, `TrangThai`).
 9. `PHAN_CONG_TRONG_TAI`: Phân công tổ 4 trọng tài cho mỗi trận (`MaTran`, `VaiTro`, `MaTrongTai`).
-10. `DANG_KY_THI_DAU`: Danh sách cầu thủ đăng ký cho từng trận (`MaTran`, `MaCauThu`, `MaDoi`, `LoaiDangKy`, `SoAoTran`).
-11. `SU_KIEN_TRAN_DAU`: Diễn biến bàn thắng, thẻ vàng, thẻ đỏ theo phút (`MaSuKien`, `MaTran`, `MaCauThu`, `MaDoi`, `LoaiSuKien`, `PhutGhiNhan`).
+10. `DANG_KY_THI_DAU`: Danh sách cầu thủ đăng ký cho từng trận (`MaTran`, `MaCauThu`, `MaDoi`, `VaiTroThiDau`, `SoAoDangKy`).
+11. `SU_KIEN_TRAN_DAU`: Diễn biến bàn thắng, thẻ vàng, thẻ đỏ theo phút sau chuẩn hóa BCNF (`MaSuKien`, `MaTran`, `MaCauThu`, `LoaiSuKien`, `PhutGhiNhan`) với khóa ngoại tổ hợp `(MaTran, MaCauThu) REFERENCES DANG_KY_THI_DAU(MaTran, MaCauThu)`.
 
 ---
 
-## 3. CÀI ĐẶT 5 TRIGGERS KIỂM TRA TOÀN VẸN NGHIỆP VỤ
+## 3. CÀI ĐẶT 5 TRIGGERS KIỂM TRA TOÀN VẸN NGHIỆP VỤ VÀ ĐIỀU KHIỂN TƯƠNG TRANH
 
-### Trigger 1: Kiểm tra số áo duy nhất trong cùng một đội bóng
-* **Mục đích**: Đảm bảo trong cùng một đội bóng, không có hai cầu thủ nào mang cùng số áo trong khoảng thời gian hợp đồng có hiệu lực.
-* **Thời điểm kích hoạt**: `BEFORE INSERT OR UPDATE OF SoAo, MaDoiHienTai, NgayBatDau, NgayKetThuc ON HOP_DONG_CAU_THU`.
-* **Cơ chế**: Truy vấn trong bảng `HOP_DONG_CAU_THU` xem có cầu thủ nào khác tại đội `MaDoiHienTai` đang sử dụng `SoAo` này và có khoảng thời gian hợp đồng giao thoa với hợp đồng mới. Nếu phát hiện vi phạm, hệ thống báo lỗi và hủy bỏ thao tác.
+Tất cả các bộ kích hoạt đều sử dụng cơ chế khóa dòng mức chia sẻ khóa (`FOR NO KEY UPDATE`) trên bản ghi cha (`SAN_VAN_DONG`, `DOI_BONG`, `TRAN_DAU`, `VONG_DAU`) nhằm ngăn chặn hiện tượng đọc bóng ma trong môi trường đa giao dịch đồng thời:
 
-### Trigger 2: Kiểm tra giới hạn tối đa 30 cầu thủ mỗi đội
-* **Mục đích**: Đảm bảo một đội bóng không có quá 30 cầu thủ đang có hợp đồng thi đấu còn hiệu lực.
-* **Thời điểm kích hoạt**: `BEFORE INSERT OR UPDATE OF MaDoiHienTai ON HOP_DONG_CAU_THU`.
-* **Cơ chế**: Đếm số lượng cầu thủ hiện tại của đội bóng (`COUNT(*)`). Nếu đã đạt 30 cầu thủ, giao dịch bị chặn lại.
+### Trigger 1: Kiểm tra sức chứa sân đấu và khoảng cách tối thiểu 4 giờ giữa hai trận cùng sân
+* **Thời điểm kích hoạt**: `BEFORE INSERT OR UPDATE ON TRAN_DAU`.
+* **Cơ chế**: Khóa dòng `SAN_VAN_DONG`, kiểm tra `SoKhach <= SucChua`, kiểm tra thời điểm kết thúc trận và sử dụng biểu thức khoảng thời gian `NgayGio > NEW.NgayGio - INTERVAL '4 hours' AND NgayGio < NEW.NgayGio + INTERVAL '4 hours'` để tận dụng chỉ mục `idx_tran_dau_san_ngaygio`.
 
-### Trigger 3: Một trọng tài chỉ điều khiển tối đa 1 trận trong một vòng đấu
-* **Mục đích**: Đảm bảo công bằng và thể lực của trọng tài, không phân công một trọng tài điều khiển 2 trận đấu trong cùng một vòng đấu.
-* **Thời điểm kích hoạt**: `BEFORE INSERT OR UPDATE OF MaTrongTai, MaTran ON PHAN_CONG_TRONG_TAI`.
-* **Cơ chế**: Lấy mã vòng đấu của trận hiện tại, kiểm tra trong bảng phân công xem trọng tài đó đã có nhiệm vụ trong bất kỳ trận nào khác của vòng đấu này chưa. Nếu có, phát sinh ngoại lệ.
+### Trigger 2: Kiểm tra hợp đồng hiệu lực, số áo duy nhất và giới hạn tối đa 30 cầu thủ mỗi đội
+* **Thời điểm kích hoạt**: `BEFORE INSERT OR UPDATE ON HOP_DONG_CAU_THU`.
+* **Cơ chế**: Khóa dòng `DOI_BONG`, kiểm tra cầu thủ chỉ thi đấu cho 1 đội tại một thời điểm, số áo 1..35 không trùng trong đội và tổng số cầu thủ của đội không vượt quá 30.
 
-### Trigger 4: Giới hạn tối đa 18 cầu thủ đăng ký cho mỗi trận đấu
-* **Mục đích**: Đúng theo luật thi đấu bóng đá chuyên nghiệp, mỗi đội bóng chỉ được đăng ký tối đa 18 cầu thủ cho mỗi trận (gồm đá chính và dự bị).
-* **Thời điểm kích hoạt**: `BEFORE INSERT ON DANG_KY_THI_DAU`.
-* **Cơ chế**: Đếm số lượng cầu thủ đã đăng ký của đội đó trong trận đấu. Nếu đã đủ 18 người, từ chối việc đăng ký thêm.
+### Trigger 3: Kiểm tra đăng ký thi đấu (11 đá chính, tối đa 9 dự bị, tổng tối đa 18) và kiểm soát treo giò
+* **Thời điểm kích hoạt**: `BEFORE INSERT OR UPDATE ON DANG_KY_THI_DAU`.
+* **Cơ chế**: Khóa dòng `TRAN_DAU`, kiểm tra biên chế cầu thủ, điều khoản cầu thủ cho mượn không đá chống đội chủ quản, giới hạn 11 đá chính + tối đa 7 dự bị, và kiểm tra án treo giò do thẻ đỏ hoặc tích lũy đủ 2 thẻ vàng ở vòng liền trước.
 
-### Trigger 5: Kiểm tra tính khớp giữa tổng số bàn thắng, thẻ phạt và kết quả trận đấu
-* **Mục đích**: Bảo đảm tính toàn vẹn dữ liệu tuyệt đối giữa kết quả trận đấu và diễn biến chi tiết.
-* **Thời điểm kích hoạt**: `AFTER INSERT OR UPDATE OF TrangThai, BanThangNha, BanThangKhach... ON TRAN_DAU`.
-* **Cơ chế**: Khi trạng thái trận đấu chuyển sang `'DaKetThuc'`, trigger tự động đếm tổng số sự kiện `'BanThang'`, `'TheVang'`, `'TheDo'` của từng đội trong bảng `SU_KIEN_TRAN_DAU`. Nếu các con số này không bằng chính xác với các cột kết quả trong bảng `TRAN_DAU`, hệ thống phát tín hiệu lỗi và dừng giao dịch.
+### Trigger 4: Một trọng tài chỉ điều khiển tối đa 1 trận trong một vòng đấu
+* **Thời điểm kích hoạt**: `BEFORE INSERT OR UPDATE ON PHAN_CONG_TRONG_TAI`.
+* **Cơ chế**: Khóa dòng `VONG_DAU`, kiểm tra trọng tài chưa được phân công ở bất kỳ trận đấu nào khác trong cùng vòng đấu.
+
+### Trigger 5: Đối soát bàn thắng, thẻ phạt và đủ 4 trọng tài khi kết thúc trận đấu
+* **Thời điểm kích hoạt**: `AFTER INSERT OR UPDATE ON TRAN_DAU`.
+* **Cơ chế**: Khi trạng thái trận đấu chuyển sang `'DaKetThuc'`, kết nối `SU_KIEN_TRAN_DAU` với `DANG_KY_THI_DAU` trên `(MaTran, MaCauThu)` và dùng một câu truy vấn gom nhóm duy nhất với `COUNT(*) FILTER (WHERE ...)` để đối soát toàn bộ bàn thắng, thẻ vàng, thẻ đỏ của hai đội.
 
 ---
 

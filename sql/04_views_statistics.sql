@@ -109,8 +109,9 @@ AS $$
         db.TenDoi,
         COUNT(*) AS SoBanThang
     FROM SU_KIEN_TRAN_DAU sk
+    JOIN DANG_KY_THI_DAU dk ON sk.MaTran = dk.MaTran AND sk.MaCauThu = dk.MaCauThu
     JOIN CAU_THU ct ON sk.MaCauThu = ct.MaCauThu
-    JOIN DOI_BONG db ON sk.MaDoi = db.MaDoi
+    JOIN DOI_BONG db ON dk.MaDoi = db.MaDoi
     WHERE sk.LoaiSuKien = 'BanThang'
     GROUP BY ct.MaCauThu, ct.HoTen, db.TenDoi
     ORDER BY SoBanThang DESC, ct.HoTen ASC
@@ -143,21 +144,23 @@ AS $$
         tt.MaTrongTai,
         tt.HoTen,
         tt.CapBac,
-        COUNT(CASE WHEN pc.VaiTro = 'Chinh' THEN 1 END) AS SoTranChinh,
-        COUNT(CASE WHEN pc.VaiTro IN ('Bien1', 'Bien2') THEN 1 END) AS SoTranBien,
-        COUNT(CASE WHEN pc.VaiTro = 'Ban' THEN 1 END) AS SoTranBan,
-        COUNT(pc.MaTran) AS TongSoTran,
+        COUNT(CASE WHEN td.MaTran IS NOT NULL AND pc.VaiTro = 'Chinh' THEN 1 END) AS SoTranChinh,
+        COUNT(CASE WHEN td.MaTran IS NOT NULL AND pc.VaiTro IN ('Bien1', 'Bien2') THEN 1 END) AS SoTranBien,
+        COUNT(CASE WHEN td.MaTran IS NOT NULL AND pc.VaiTro = 'Ban' THEN 1 END) AS SoTranBan,
+        COUNT(td.MaTran) AS TongSoTran,
         (
-            COUNT(CASE WHEN pc.VaiTro = 'Chinh' THEN 1 END) * 3000000 +
-            COUNT(CASE WHEN pc.VaiTro IN ('Bien1', 'Bien2') THEN 1 END) * 2000000 +
-            COUNT(CASE WHEN pc.VaiTro = 'Ban' THEN 1 END) * 1000000
+            COUNT(CASE WHEN td.MaTran IS NOT NULL AND pc.VaiTro = 'Chinh' THEN 1 END) * 3000000 +
+            COUNT(CASE WHEN td.MaTran IS NOT NULL AND pc.VaiTro IN ('Bien1', 'Bien2') THEN 1 END) * 2000000 +
+            COUNT(CASE WHEN td.MaTran IS NOT NULL AND pc.VaiTro = 'Ban' THEN 1 END) * 1000000
         )::DECIMAL(15, 2) AS TongLuong
     FROM TRONG_TAI tt
-    LEFT JOIN PHAN_CONG_TRONG_TAI pc ON tt.MaTrongTai = pc.MaTrongTai
-    LEFT JOIN TRAN_DAU td ON pc.MaTran = td.MaTran 
-                          AND EXTRACT(MONTH FROM td.NgayGio) = p_thang
-                          AND EXTRACT(YEAR FROM td.NgayGio) = p_nam
-                          AND td.TrangThai = 'DaKetThuc'
+    LEFT JOIN (
+        PHAN_CONG_TRONG_TAI pc
+        JOIN TRAN_DAU td ON pc.MaTran = td.MaTran
+                        AND EXTRACT(MONTH FROM td.NgayGio) = p_thang
+                        AND EXTRACT(YEAR FROM td.NgayGio) = p_nam
+                        AND td.TrangThai = 'DaKetThuc'
+    ) ON tt.MaTrongTai = pc.MaTrongTai
     GROUP BY tt.MaTrongTai, tt.HoTen, tt.CapBac
     ORDER BY TongLuong DESC, tt.HoTen ASC;
 $$;

@@ -23,7 +23,8 @@ CREATE TABLE SAN_VAN_DONG (
     MaSan VARCHAR(10) PRIMARY KEY,
     TenSan VARCHAR(100) NOT NULL UNIQUE,
     DiaChi VARCHAR(200) NOT NULL,
-    SucChua INT NOT NULL CHECK (SucChua > 0)
+    SucChua INT NOT NULL CHECK (SucChua > 0),
+    KhuVuc VARCHAR(20) NOT NULL DEFAULT 'MienBac' CHECK (KhuVuc IN ('MienBac', 'MienNam'))
 );
 
 -- 2. BẢNG ĐỘI BÓNG
@@ -60,9 +61,10 @@ CREATE TABLE HOP_DONG_CAU_THU (
     SoAo INT NOT NULL CHECK (SoAo BETWEEN 1 AND 35),
     NgayBatDau DATE NOT NULL,
     NgayKetThuc DATE NOT NULL,
-    TrangThai VARCHAR(20) NOT NULL CHECK (TrangThai IN ('ChinhThuc', 'ChoMuon')),
-    MucLuong DECIMAL(15, 2) DEFAULT 0 CHECK (MucLuong >= 0),
-    CHECK (NgayKetThuc > NgayBatDau)
+    TrangThai VARCHAR(20) NOT NULL CHECK (TrangThai IN ('ChinhThuc', 'ChoMuon', 'ThanhLy')),
+    CHECK (NgayKetThuc >= NgayBatDau),
+    UNIQUE (MaCauThu, MaDoiHienTai),
+    UNIQUE (MaDoiHienTai, SoAo)
 );
 
 -- 6. BẢNG TRỌNG TÀI
@@ -98,7 +100,10 @@ CREATE TABLE TRAN_DAU (
     TheDoNha INT DEFAULT 0 CHECK (TheDoNha >= 0),
     TheDoKhach INT DEFAULT 0 CHECK (TheDoKhach >= 0),
     TrangThai VARCHAR(20) NOT NULL DEFAULT 'ChuaDienRa' CHECK (TrangThai IN ('ChuaDienRa', 'DaKetThuc')),
-    CHECK (MaDoiNha <> MaDoiKhach)
+    CHECK (MaDoiNha <> MaDoiKhach),
+    UNIQUE (MaDoiNha, MaDoiKhach),
+    UNIQUE (MaVong, MaDoiNha),
+    UNIQUE (MaVong, MaDoiKhach)
 );
 
 -- 9. BẢNG PHÂN CÔNG TRỌNG TÀI (Đủ 4 trọng tài cho mỗi trận)
@@ -106,7 +111,8 @@ CREATE TABLE PHAN_CONG_TRONG_TAI (
     MaTran VARCHAR(10) NOT NULL REFERENCES TRAN_DAU(MaTran) ON DELETE CASCADE ON UPDATE CASCADE,
     VaiTro VARCHAR(20) NOT NULL CHECK (VaiTro IN ('Chinh', 'Bien1', 'Bien2', 'Ban')),
     MaTrongTai VARCHAR(10) NOT NULL REFERENCES TRONG_TAI(MaTrongTai) ON UPDATE CASCADE,
-    PRIMARY KEY (MaTran, VaiTro)
+    PRIMARY KEY (MaTran, VaiTro),
+    UNIQUE (MaTran, MaTrongTai)
 );
 
 -- 10. BẢNG ĐĂNG KÝ THI ĐẤU (Tối đa 18 cầu thủ mỗi đội trong trận)
@@ -114,25 +120,27 @@ CREATE TABLE DANG_KY_THI_DAU (
     MaTran VARCHAR(10) NOT NULL REFERENCES TRAN_DAU(MaTran) ON DELETE CASCADE ON UPDATE CASCADE,
     MaCauThu VARCHAR(10) NOT NULL REFERENCES CAU_THU(MaCauThu) ON UPDATE CASCADE,
     MaDoi VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi) ON UPDATE CASCADE,
-    LoaiDangKy VARCHAR(20) NOT NULL CHECK (LoaiDangKy IN ('ChinhThuc', 'DuBi')),
-    SoAoTran INT NOT NULL CHECK (SoAoTran BETWEEN 1 AND 35),
-    PRIMARY KEY (MaTran, MaCauThu)
+    VaiTroThiDau VARCHAR(20) NOT NULL CHECK (VaiTroThiDau IN ('ChinhThuc', 'DuBi')),
+    SoAoDangKy INT NOT NULL CHECK (SoAoDangKy BETWEEN 1 AND 35),
+    PRIMARY KEY (MaTran, MaCauThu),
+    UNIQUE (MaTran, MaDoi, SoAoDangKy)
 );
 
--- 11. BẢNG SỰ KIỆN TRẬN ĐẤU (Bàn thắng, Thẻ vàng, Thẻ đỏ)
+-- 11. BẢNG SỰ KIỆN TRẬN ĐẤU (Đã chuẩn hóa BCNF: Loại bỏ MaDoi dư thừa, tham chiếu tổ hợp tới DANG_KY_THI_DAU)
 CREATE TABLE SU_KIEN_TRAN_DAU (
     MaSuKien VARCHAR(15) PRIMARY KEY,
-    MaTran VARCHAR(10) NOT NULL REFERENCES TRAN_DAU(MaTran) ON DELETE CASCADE ON UPDATE CASCADE,
-    MaCauThu VARCHAR(10) NOT NULL REFERENCES CAU_THU(MaCauThu) ON UPDATE CASCADE,
-    MaDoi VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi) ON UPDATE CASCADE,
+    MaTran VARCHAR(10) NOT NULL,
+    MaCauThu VARCHAR(10) NOT NULL,
     LoaiSuKien VARCHAR(20) NOT NULL CHECK (LoaiSuKien IN ('BanThang', 'TheVang', 'TheDo')),
-    PhutGhiNhan INT NOT NULL CHECK (PhutGhiNhan BETWEEN 1 AND 120)
+    PhutGhiNhan INT NOT NULL CHECK (PhutGhiNhan BETWEEN 1 AND 120),
+    FOREIGN KEY (MaTran, MaCauThu) REFERENCES DANG_KY_THI_DAU(MaTran, MaCauThu) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- TẠO CHỈ MỤC (INDEX) ĐỂ TỐI ƯU TRUY VẤN
 CREATE INDEX idx_tran_dau_vong ON TRAN_DAU(MaVong);
+CREATE INDEX idx_tran_dau_san_ngaygio ON TRAN_DAU(MaSan, NgayGio);
 CREATE INDEX idx_tran_dau_doinha ON TRAN_DAU(MaDoiNha);
 CREATE INDEX idx_tran_dau_doikhach ON TRAN_DAU(MaDoiKhach);
 CREATE INDEX idx_hopdong_doihientai ON HOP_DONG_CAU_THU(MaDoiHienTai);
-CREATE INDEX idx_sukien_tran ON SU_KIEN_TRAN_DAU(MaTran);
-CREATE INDEX idx_dangky_tran ON DANG_KY_THI_DAU(MaTran);
+CREATE INDEX idx_sukien_tran_cauthu ON SU_KIEN_TRAN_DAU(MaTran, MaCauThu);
+CREATE INDEX idx_dangky_tran_doi ON DANG_KY_THI_DAU(MaTran, MaDoi);

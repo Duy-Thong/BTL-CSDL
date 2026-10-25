@@ -1,12 +1,12 @@
 -- ============================================================================
 -- PHẦN 3: CÀI ĐẶT 5 GIAO DỊCH (TRANSACTION / STORED PROCEDURE) TRỌNG YẾU
--- HỆ QUẢN TRỊ: PostgreSQL (PL/pgSQL)
+-- HỆ QUẢN TRỊ: PostgreSQL (PL/pgSQL) - Tối ưu hóa Chỉ mục B-Tree & Khóa đồng thời
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
 -- GIAO DỊCH 1: KHỞI TẠO LỊCH THI ĐẤU CHO MỘT TRẬN ĐẤU THUỘC VÒNG ĐẤU
 -- Đảm bảo: Hai đội không trùng nhau, cặp đấu chưa từng đá trên sân nhà này, 
---          sân vận động không bị trùng giờ thi đấu.
+--          sân vận động không bị trùng giờ thi đấu (sử dụng B-Tree Index Scan).
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE sp_tao_lich_thi_dau(
     p_ma_tran VARCHAR(10),
@@ -28,6 +28,9 @@ BEGIN
         RAISE EXCEPTION 'Lỗi giao dịch: Đội chủ nhà và đội khách không được trùng nhau!';
     END IF;
 
+    -- Khóa bản ghi sân vận động để ngăn chặn 2 giao dịch xếp lịch trùng giờ đồng thời trên cùng sân
+    PERFORM 1 FROM SAN_VAN_DONG WHERE MaSan = p_ma_san FOR NO KEY UPDATE;
+
     -- 2. Kiểm tra thể thức vòng tròn 2 lượt: Cặp đấu này trên sân nhà này đã tồn tại chưa
     SELECT COUNT(*) INTO v_da_ton_tai
     FROM TRAN_DAU
@@ -38,14 +41,16 @@ BEGIN
             p_ma_doi_nha, p_ma_doi_khach;
     END IF;
 
-    -- 3. Kiểm tra sân vận động không bị trùng giờ thi đấu (cách nhau tối thiểu 4 tiếng)
+    -- 3. Kiểm tra sân vận động không bị trùng giờ thi đấu (cách nhau tối thiểu 4 giờ)
+    -- Sử dụng phép so sánh khoảng trực tiếp trên cột NgayGio để tận dụng chỉ mục B-Tree idx_tran_dau_san_ngaygio
     SELECT COUNT(*) INTO v_trung_lich_san
     FROM TRAN_DAU
     WHERE MaSan = p_ma_san
-      AND ABS(EXTRACT(EPOCH FROM (NgayGio - p_ngay_gio))) < 14400;
+      AND NgayGio > p_ngay_gio - INTERVAL '4 hours'
+      AND NgayGio < p_ngay_gio + INTERVAL '4 hours';
 
     IF v_trung_lich_san > 0 THEN
-        RAISE EXCEPTION 'Lỗi giao dịch: Sân vận động % đã có trận đấu diễn ra trong khoảng thời gian này!',
+        RAISE EXCEPTION 'Lỗi giao dịch: Sân vận động % đã có trận đấu diễn ra trong khoảng thời gian 4 giờ lân cận!',
             p_ma_san;
     END IF;
 
@@ -83,6 +88,9 @@ BEGIN
         RAISE EXCEPTION 'Lỗi giao dịch: Bốn trọng tài trong tổ phân công phải là các cá nhân phân biệt!';
     END IF;
 
+    -- Khóa bản ghi trận đấu để đảm bảo tính cô lập khi cập nhật tổ trọng tài
+    PERFORM 1 FROM TRAN_DAU WHERE MaTran = p_ma_tran FOR NO KEY UPDATE;
+
     -- 2. Xóa phân công cũ nếu có để gán lại toàn bộ tổ trọng tài
     DELETE FROM PHAN_CONG_TRONG_TAI WHERE MaTran = p_ma_tran;
 
@@ -104,19 +112,19 @@ CREATE OR REPLACE PROCEDURE sp_dang_ky_cau_thu_tran(
     p_ma_tran VARCHAR(10),
     p_ma_doi VARCHAR(10),
     p_ma_cau_thu VARCHAR(10),
-    p_loai_dang_ky VARCHAR(20)
+    p_vai_tro_thi_dau VARCHAR(20)
 )
 LANGUAGE plpgsql
 AS $$
 DECLARE
     v_so_ao INT;
-    v_hop_le INT;
 BEGIN
     -- 1. Kiểm tra cầu thủ có hợp đồng còn hiệu lực và đang thi đấu cho đội này không
     SELECT SoAo INTO v_so_ao
     FROM HOP_DONG_CAU_THU
     WHERE MaCauThu = p_ma_cau_thu
       AND MaDoiHienTai = p_ma_doi
+      AND TrangThai IN ('ChinhThuc', 'ChoMuon')
       AND CURRENT_DATE BETWEEN NgayBatDau AND NgayKetThuc;
 
     IF v_so_ao IS NULL THEN
@@ -124,9 +132,9 @@ BEGIN
             p_ma_cau_thu, p_ma_doi;
     END IF;
 
-    -- 2. Thực hiện đăng ký (Trigger trg_check_dang_ky_toi_da_18_cau_thu sẽ chặn nếu vượt 18 người)
-    INSERT INTO DANG_KY_THI_DAU (MaTran, MaCauThu, MaDoi, LoaiDangKy, SoAoTran)
-    VALUES (p_ma_tran, p_ma_cau_thu, p_ma_doi, p_loai_dang_ky, v_so_ao);
+    -- 2. Thực hiện đăng ký (Trigger kiểm tra đăng ký sẽ khóa bản ghi trận và chặn nếu vượt giới hạn)
+    INSERT INTO DANG_KY_THI_DAU (MaTran, MaCauThu, MaDoi, VaiTroThiDau, SoAoDangKy)
+    VALUES (p_ma_tran, p_ma_cau_thu, p_ma_doi, p_vai_tro_thi_dau, v_so_ao);
 END;
 $$;
 
@@ -151,10 +159,11 @@ DECLARE
     v_trang_thai VARCHAR(20);
     v_ngay_gio TIMESTAMP;
 BEGIN
-    -- 1. Lấy thông tin trận đấu
+    -- 1. Lấy thông tin trận đấu và khóa độc quyền dòng dữ liệu trận đấu (FOR UPDATE)
     SELECT TrangThai, NgayGio INTO v_trang_thai, v_ngay_gio
     FROM TRAN_DAU
-    WHERE MaTran = p_ma_tran;
+    WHERE MaTran = p_ma_tran
+    FOR UPDATE;
 
     IF v_trang_thai IS NULL THEN
         RAISE EXCEPTION 'Lỗi giao dịch: Không tìm thấy trận đấu có mã %!', p_ma_tran;
@@ -166,7 +175,7 @@ BEGIN
     END IF;
 
     -- 3. Cập nhật kết quả chung cuộc và chuyển trạng thái
-    -- (Trigger trg_check_khop_ban_thang_va_the sẽ kiểm tra tính khớp với các sự kiện đã ghi)
+    -- (Trigger trg_check_khop_ban_thang_va_the sẽ kiểm tra tính khớp nối với các sự kiện đã ghi)
     UPDATE TRAN_DAU
     SET SoKhach = p_so_khach,
         BanThangNha = p_ban_nha,
@@ -194,12 +203,14 @@ CREATE OR REPLACE PROCEDURE sp_chuyen_nhuong_cho_muon_cau_thu(
     p_so_ao_moi INT,
     p_ngay_bat_dau DATE,
     p_ngay_ket_thuc DATE,
-    p_trang_thai VARCHAR(20),
-    p_muc_luong DECIMAL(15, 2)
+    p_trang_thai VARCHAR(20)
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    -- Khóa bản ghi cầu thủ để ngăn chặn hai giao dịch chuyển nhượng đồng thời cho cùng 1 cầu thủ
+    PERFORM 1 FROM CAU_THU WHERE MaCauThu = p_ma_cau_thu FOR NO KEY UPDATE;
+
     -- 1. Cập nhật ngày kết thúc của các hợp đồng đang hiệu lực trước đó về ngày bắt đầu mới - 1
     UPDATE HOP_DONG_CAU_THU
     SET NgayKetThuc = p_ngay_bat_dau - INTERVAL '1 day'
@@ -207,13 +218,13 @@ BEGIN
       AND NgayKetThuc >= p_ngay_bat_dau;
 
     -- 2. Thêm bản ghi hợp đồng mới cho cầu thủ tại đội bóng mới
-    -- (Các trigger kiểm tra số áo duy nhất và giới hạn 30 cầu thủ sẽ tự động kiểm tra tại đội mới)
+    -- (Các trigger kiểm tra số áo duy nhất và giới hạn 30 cầu thủ sẽ tự động khóa đội mới và kiểm tra)
     INSERT INTO HOP_DONG_CAU_THU (
         MaHD, MaCauThu, MaDoiChuQuan, MaDoiHienTai, 
-        SoAo, NgayBatDau, NgayKetThuc, TrangThai, MucLuong
+        SoAo, NgayBatDau, NgayKetThuc, TrangThai
     ) VALUES (
         p_ma_hd_moi, p_ma_cau_thu, p_ma_doi_chu_quan, p_ma_doi_moi,
-        p_so_ao_moi, p_ngay_bat_dau, p_ngay_ket_thuc, p_trang_thai, p_muc_luong
+        p_so_ao_moi, p_ngay_bat_dau, p_ngay_ket_thuc, p_trang_thai
     );
 END;
 $$;

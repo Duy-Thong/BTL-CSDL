@@ -2,20 +2,20 @@
 
 \section{Quy tắc ánh xạ từ lược đồ thực thể liên kết sang mô hình quan hệ}
 
-Quá trình chuyển đổi từ lược đồ thực thể liên kết sang các lược đồ quan hệ được thực hiện theo các quy tắc sau:
+Quá trình chuyển đổi từ lược đồ thực thể liên kết sang các lược đồ quan hệ được thực hiện theo các quy tắc chuẩn của mô hình quan hệ:
 \begin{enumerate}
-    \item \textbf{Ánh xạ tập thực thể mạnh}: Mỗi tập thực thể mạnh gồm \texttt{SAN\_VAN\_DONG}, \texttt{DOI\_BONG}, \texttt{CAU\_THU}, \texttt{TRONG\_TAI}, \texttt{VONG\_DAU} được chuyển thành một quan hệ độc lập. Khóa chính của thực thể trở thành khóa chính của quan hệ tương ứng.
-    \item \textbf{Ánh xạ mối kết hợp một -- nhiều}: Được chuyển đổi bằng cách lấy thuộc tính khóa chính của quan hệ phía bên một đưa vào làm thuộc tính khóa ngoại tại quan hệ phía bên nhiều. Ví dụ: Thuộc tính \texttt{MaSanNha} trong quan hệ \texttt{DOI\_BONG} là khóa ngoại tham chiếu đến khóa chính \texttt{MaSan} của quan hệ \texttt{SAN\_VAN\_DONG}.
-    \item \textbf{Ánh xạ thuộc tính đa trị và thực thể yếu}: Thuộc tính màu áo của đội bóng được tách thành bảng riêng \texttt{MAU\_AO\_DOI\_BONG}. Khóa chính tổ hợp gồm thuộc tính khóa của đội bóng \texttt{MaDoi} và thuộc tính phân biệt \texttt{LoaiMauAo}.
-    \item \textbf{Ánh xạ mối kết hợp nhiều -- nhiều}: Mối kết hợp nhiều -- nhiều giữa \texttt{TRAN\_DAU} và \texttt{TRONG\_TAI} được tách thành quan hệ trung gian \texttt{PHAN\_CONG\_TRONG\_TAI} với khóa chính tổ hợp gồm \texttt{MaTran} và \texttt{VaiTro}. Tương tự, danh sách thi đấu được biểu diễn qua quan hệ \texttt{DANG\_KY\_THI\_DAU}.
+    \item \textbf{Ánh xạ tập thực thể mạnh}: Mỗi tập thực thể mạnh gồm \texttt{SAN\_VAN\_DONG}, \texttt{DOI\_BONG}, \texttt{CAU\_THU}, \texttt{TRONG\_TAI}, \texttt{VONG\_DAU} được chuyển thành một lược đồ quan hệ độc lập giữ nguyên tập thuộc tính đơn trị và khóa chính của thực thể.
+    \item \textbf{Ánh xạ mối kết hợp một -- nhiều}: Đối với mối kết hợp $1 - N$, khóa chính của quan hệ phía $1$ được bổ sung vào làm thuộc tính khóa ngoại tại quan hệ phía $N$. Cụ thể, thuộc tính \texttt{MaSanNha} trong \texttt{DOI\_BONG} tham chiếu tới \texttt{SAN\_VAN\_DONG}(\texttt{MaSan}); các thuộc tính \texttt{MaVong}, \texttt{MaDoiNha}, \texttt{MaDoiKhach}, \texttt{MaSan} trong \texttt{TRAN\_DAU} lần lượt tham chiếu tới khóa chính của \texttt{VONG\_DAU}, \texttt{DOI\_BONG} và \texttt{SAN\_VAN\_DONG}.
+    \item \textbf{Ánh xạ thực thể yếu và thuộc tính đa trị}: Tập thực thể yếu \texttt{MAU\_AO\_DOI\_BONG} phụ thuộc vào \texttt{DOI\_BONG} được ánh xạ thành quan hệ có khóa chính tổ hợp gồm khóa chính của thực thể chủ \texttt{MaDoi} kết hợp với khóa bộ phận \texttt{LoaiMauAo}.
+    \item \textbf{Ánh xạ mối kết hợp nhiều -- nhiều và thực thể kết hợp}: Mối kết hợp $N - N$ giữa \texttt{TRAN\_DAU} và \texttt{TRONG\_TAI} được chuyển thành quan hệ \texttt{PHAN\_CONG\_TRONG\_TAI} với khóa chính tổ hợp (\texttt{MaTran}, \texttt{VaiTro}). Mối kết hợp $N - N$ giữa \texttt{TRAN\_DAU} và \texttt{CAU\_THU} được chuyển thành quan hệ \texttt{DANG\_KY\_THI\_DAU} với khóa chính tổ hợp (\texttt{MaTran}, \texttt{MaCauThu}).
 \end{enumerate}
 
-\section{Tập hợp các lược đồ quan hệ và liên kết khóa}
+\section{Tập hợp các lược đồ quan hệ ban đầu sau ánh xạ}
 
-Sau khi ánh xạ, hệ thống gồm 11 lược đồ quan hệ. Ký hiệu quy ước: Thuộc tính \underline{\textbf{in đậm gạch chân}} là khóa chính, thuộc tính \textit{in nghiêng} là khóa ngoại.
+Ngay sau bước ánh xạ từ mô hình thực thể liên kết sơ bộ (trước khi chuẩn hóa), hệ thống gồm 11 lược đồ quan hệ. Ký hiệu quy ước: Thuộc tính \underline{\textbf{in đậm gạch chân}} là khóa chính, thuộc tính \textit{in nghiêng} là khóa ngoại.
 
 \begin{enumerate}
-    \item $\text{SAN\_VAN\_DONG}(\underline{\mathbf{MaSan}}, \text{TenSan}, \text{DiaChi}, \text{SucChua})$
+    \item $\text{SAN\_VAN\_DONG}(\underline{\mathbf{MaSan}}, \text{TenSan}, \text{DiaChi}, \text{SucChua}, \text{KhuVuc})$
     
     \item $\text{DOI\_BONG}(\underline{\mathbf{MaDoi}}, \text{TenDoi}, \text{HLV}, \textit{MaSanNha})$\\
     \textit{Khóa ngoại: $\text{MaSanNha} \rightarrow \text{SAN\_VAN\_DONG}(\text{MaSan})$}
@@ -25,7 +25,7 @@ Sau khi ánh xạ, hệ thống gồm 11 lược đồ quan hệ. Ký hiệu quy
     
     \item $\text{CAU\_THU}(\underline{\mathbf{MaCauThu}}, \text{HoTen}, \text{NgaySinh}, \text{ViTri}, \text{QuocTich})$
     
-    \item $\text{HOP\_DONG\_CAU\_THU}(\underline{\mathbf{MaHD}}, \textit{MaCauThu}, \textit{MaDoiChuQuan}, \textit{MaDoiHienTai}, \text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai}, \text{MucLuong})$\\
+    \item $\text{HOP\_DONG\_CAU\_THU}(\underline{\mathbf{MaHD}}, \textit{MaCauThu}, \textit{MaDoiChuQuan}, \textit{MaDoiHienTai}, \text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai})$\\
     \textit{Khóa ngoại: $\text{MaCauThu} \rightarrow \text{CAU\_THU}(\text{MaCauThu})$}\\
     \textit{Khóa ngoại: $\text{MaDoiChuQuan} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}\\
     \textit{Khóa ngoại: $\text{MaDoiHienTai} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}
@@ -44,197 +44,242 @@ Sau khi ánh xạ, hệ thống gồm 11 lược đồ quan hệ. Ký hiệu quy
     \textit{Khóa ngoại: $\text{MaTran} \rightarrow \text{TRAN\_DAU}(\text{MaTran})$}\\
     \textit{Khóa ngoại: $\text{MaTrongTai} \rightarrow \text{TRONG\_TAI}(\text{MaTrongTai})$}
     
-    \item $\text{DANG\_KY\_THI\_DAU}(\underline{\mathbf{MaTran}}, \underline{\mathbf{MaCauThu}}, \textit{MaDoi}, \text{LoaiDangKy}, \text{SoAoTran})$\\
+    \item $\text{DANG\_KY\_THI\_DAU}(\underline{\mathbf{MaTran}}, \underline{\mathbf{MaCauThu}}, \textit{MaDoi}, \text{VaiTroThiDau}, \text{SoAoDangKy})$\\
     \textit{Khóa ngoại: $\text{MaTran} \rightarrow \text{TRAN\_DAU}(\text{MaTran})$}\\
     \textit{Khóa ngoại: $\text{MaCauThu} \rightarrow \text{CAU\_THU}(\text{MaCauThu})$}\\
     \textit{Khóa ngoại: $\text{MaDoi} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}
     
-    \item $\text{SU\_KIEN\_TRAN\_DAU}(\underline{\mathbf{MaSuKien}}, \textit{MaTran}, \textit{MaCauThu}, \textit{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan})$\\
-    \textit{Khóa ngoại: $\text{MaTran} \rightarrow \text{TRAN\_DAU}(\text{MaTran})$}\\
-    \textit{Khóa ngoại: $\text{MaCauThu} \rightarrow \text{CAU\_THU}(\text{MaCauThu})$}\\
-    \textit{Khóa ngoại: $\text{MaDoi} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}
+    \item $\text{SU\_KIEN\_TRAN\_DAU\_BAN\_DAU}(\underline{\mathbf{MaSuKien}}, \textit{MaTran}, \textit{MaCauThu}, \textit{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan})$\\
+    \textit{Khóa ngoại sơ bộ: $\text{MaTran} \rightarrow \text{TRAN\_DAU}(\text{MaTran})$, $\text{MaCauThu} \rightarrow \text{CAU\_THU}(\text{MaCauThu})$, $\text{MaDoi} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}
 \end{enumerate}
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[angle=90, width=0.7\textheight, keepaspectratio]{Figures/RSD.png}
-    \caption{Sơ đồ cấu trúc lược đồ quan hệ và mối liên kết khóa}
-    \label{fig:relational_diagram}
-\end{figure}
+\section{Xác định phụ thuộc hàm, tính bao đóng và kiểm tra chuẩn BCNF}
 
-\section{Xác định phụ thuộc hàm và chứng minh chuẩn BCNF cho từng lược đồ}
+\textbf{Định nghĩa dạng chuẩn Boyce--Codd (BCNF):} Một lược đồ quan hệ $R(U, F)$ đạt dạng chuẩn BCNF khi và chỉ khi với mọi phụ thuộc hàm không tầm thường $X \rightarrow Y \in F^+$ (tức $Y \nsubseteq X$), vế trái $X$ bắt buộc phải là một siêu khóa của $R$, nghĩa là bao đóng thuộc tính của $X$ thỏa mãn $X^+ = U$.
+
+Dưới đây, ta xác định tập phụ thuộc hàm tối thiểu $F_i$, tính bao đóng để tìm toàn bộ các khóa ứng viên và kiểm tra điều kiện BCNF cho từng lược đồ quan hệ.
 
 \subsection{Quan hệ SAN\_VAN\_DONG}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaSan}, \text{TenSan}, \text{DiaChi}, \text{SucChua}\}$.
-    \item Tập phụ thuộc hàm tối thiểu $F_1$:
+    \item Tập thuộc tính: $U_1 = \{\text{MaSan}, \text{TenSan}, \text{DiaChi}, \text{SucChua}, \text{KhuVuc}\}$.
+    \item Tập phụ thuộc hàm $F_1$:
     \begin{align*}
-        f_{1.1}: & \quad \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\} \\
-        f_{1.2}: & \quad \text{TenSan} \rightarrow \{\text{MaSan}, \text{DiaChi}, \text{SucChua}\}
+        f_{1.1}: & \quad \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}, \text{KhuVuc}\} \\
+        f_{1.2}: & \quad \text{TenSan} \rightarrow \{\text{MaSan}, \text{DiaChi}, \text{SucChua}, \text{KhuVuc}\}
     \end{align*}
-    \item Xác định khóa ứng viên:
-    $$\text{MaSan}^+ = U \implies \text{MaSan} \text{ là khóa ứng viên.}$$
-    $$\text{TenSan}^+ = U \implies \text{TenSan} \text{ là khóa ứng viên.}$$
-    \item Kiểm tra điều kiện BCNF:
-    \begin{itemize}
-        \item Xét $f_{1.1}$: Vế trái $\text{MaSan}$ là siêu khóa.
-        \item Xét $f_{1.2}$: Vế trái $\text{TenSan}$ là siêu khóa.
-    \end{itemize}
-    \item \textbf{Kết luận}: Quan hệ \texttt{SAN\_VAN\_DONG} đạt dạng chuẩn \textbf{BCNF}.
+    \item Tính bao đóng và xác định khóa ứng viên:
+    $$\{\text{MaSan}\}^+ = U_1, \quad \{\text{TenSan}\}^+ = U_1 \implies K_1 = \{\text{MaSan}\}, \ K_2 = \{\text{TenSan}\}.$$
+    \item Kiểm tra điều kiện BCNF: Vế trái của $f_{1.1}$ và $f_{1.2}$ đều là khóa ứng viên (siêu khóa) của $U_1$.
+    \item \textbf{Kết luận}: Quan hệ \texttt{SAN\_VAN\_DONG} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ DOI\_BONG}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaDoi}, \text{TenDoi}, \text{HLV}, \text{MaSanNha}\}$.
+    \item Tập thuộc tính: $U_2 = \{\text{MaDoi}, \text{TenDoi}, \text{HLV}, \text{MaSanNha}\}$.
     \item Tập phụ thuộc hàm $F_2$:
     \begin{align*}
         f_{2.1}: & \quad \text{MaDoi} \rightarrow \{\text{TenDoi}, \text{HLV}, \text{MaSanNha}\} \\
         f_{2.2}: & \quad \text{TenDoi} \rightarrow \{\text{MaDoi}, \text{HLV}, \text{MaSanNha}\}
     \end{align*}
-    \item Xác định khóa: Khóa ứng viên gồm $\{\text{MaDoi}\}$ và $\{\text{TenDoi}\}$.
-    \item Kiểm tra điều kiện BCNF: Cả hai vế trái $\text{MaDoi}$ và $\text{TenDoi}$ đều là siêu khóa của quan hệ.
-    \item \textbf{Kết luận}: Quan hệ \texttt{DOI\_BONG} đạt dạng chuẩn \textbf{BCNF}.
+    (Lưu ý: Không tồn tại phụ thuộc hàm $\text{MaSanNha} \rightarrow \text{MaDoi}$ vì nhiều đội bóng cùng thành phố như Hà Nội FC và Công An Hà Nội có thể đăng ký chung một sân nhà là sân Hàng Đẫy).
+    \item Tính bao đóng và xác định khóa ứng viên:
+    $$\{\text{MaDoi}\}^+ = U_2, \quad \{\text{TenDoi}\}^+ = U_2 \implies K_1 = \{\text{MaDoi}\}, \ K_2 = \{\text{TenDoi}\}.$$
+    \item Kiểm tra điều kiện BCNF: Cả hai vế trái đều là siêu khóa của $U_2$.
+    \item \textbf{Kết luận}: Quan hệ \texttt{DOI\_BONG} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ MAU\_AO\_DOI\_BONG}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaDoi}, \text{LoaiMauAo}, \text{MoTaMau}\}$.
+    \item Tập thuộc tính: $U_3 = \{\text{MaDoi}, \text{LoaiMauAo}, \text{MoTaMau}\}$.
     \item Tập phụ thuộc hàm $F_3$:
     $$f_{3.1}: \quad \{\text{MaDoi}, \text{LoaiMauAo}\} \rightarrow \text{MoTaMau}$$
-    \item Khóa ứng viên: $K = \{\text{MaDoi}, \text{LoaiMauAo}\}$ do $\{\text{MaDoi}, \text{LoaiMauAo}\}^+ = U$.
-    \item Kiểm tra điều kiện BCNF: Vế trái của phụ thuộc hàm $f_{3.1}$ là khóa chính của quan hệ.
-    \item \textbf{Kết luận}: Quan hệ \texttt{MAU\_AO\_DOI\_BONG} đạt dạng chuẩn \textbf{BCNF}.
+    \item Tính bao đóng và xác định khóa ứng viên:
+    $$\{\text{MaDoi}, \text{LoaiMauAo}\}^+ = U_3 \implies K = \{\text{MaDoi}, \text{LoaiMauAo}\}.$$
+    \item Kiểm tra điều kiện BCNF: Vế trái của $f_{3.1}$ là khóa ứng viên duy nhất.
+    \item \textbf{Kết luận}: Quan hệ \texttt{MAU\_AO\_DOI\_BONG} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ CAU\_THU}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaCauThu}, \text{HoTen}, \text{NgaySinh}, \text{ViTri}, \text{QuocTich}\}$.
+    \item Tập thuộc tính: $U_4 = \{\text{MaCauThu}, \text{HoTen}, \text{NgaySinh}, \text{ViTri}, \text{QuocTich}\}$.
     \item Tập phụ thuộc hàm $F_4$:
     $$f_{4.1}: \quad \text{MaCauThu} \rightarrow \{\text{HoTen}, \text{NgaySinh}, \text{ViTri}, \text{QuocTich}\}$$
-    \item Khóa ứng viên: $K = \{\text{MaCauThu}\}$.
+    \item Tính bao đóng và xác định khóa ứng viên:
+    $$\{\text{MaCauThu}\}^+ = U_4 \implies K = \{\text{MaCauThu}\}.$$
     \item Kiểm tra điều kiện BCNF: Vế trái $\text{MaCauThu}$ là siêu khóa.
-    \item \textbf{Kết luận}: Quan hệ \texttt{CAU\_THU} đạt dạng chuẩn \textbf{BCNF}.
+    \item \textbf{Kết luận}: Quan hệ \texttt{CAU\_THU} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ HOP\_DONG\_CAU\_THU}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaHD}, \text{MaCauThu}, \text{MaDoiChuQuan}, \text{MaDoiHienTai}, \text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai}, \text{MucLuong}\}$.
-    \item Tập phụ thuộc hàm $F_5$:
-    $$f_{5.1}: \quad \text{MaHD} \rightarrow \{\text{MaCauThu}, \text{MaDoiChuQuan}, \text{MaDoiHienTai}, \text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai}, \text{MucLuong}\}$$
-    \item Khóa ứng viên: $K = \{\text{MaHD}\}$.
-    \item Kiểm tra điều kiện BCNF: Vế trái $\text{MaHD}$ là siêu khóa duy nhất.
-    \item \textbf{Kết luận}: Quan hệ \texttt{HOP\_DONG\_CAU\_THU} đạt dạng chuẩn \textbf{BCNF}.
+    \item Tập thuộc tính: $U_5 = \{\text{MaHD}, \text{MaCauThu}, \text{MaDoiChuQuan}, \text{MaDoiHienTai}, \text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai}\}$.
+    \item Tập phụ thuộc hàm $F_5$ (trong phạm vi quản lý một mùa giải):
+    \begin{align*}
+        f_{5.1}: & \quad \text{MaHD} \rightarrow U_5 \setminus \{\text{MaHD}\} \\
+        f_{5.2}: & \quad \{\text{MaCauThu}, \text{MaDoiHienTai}\} \rightarrow U_5 \setminus \{\text{MaCauThu}, \text{MaDoiHienTai}\} \\
+        f_{5.3}: & \quad \{\text{MaDoiHienTai}, \text{SoAo}\} \rightarrow U_5 \setminus \{\text{MaDoiHienTai}, \text{SoAo}\}
+    \end{align*}
+    (Trong đó $f_{5.2}$ phản ánh quy tắc mỗi cầu thủ chỉ ký một bản hợp đồng thi đấu tại một đội bóng hiện tại trong mùa giải; $f_{5.3}$ phản ánh quy tắc trong cùng một đội bóng hiện tại, mỗi số áo từ $1$ đến $35$ chỉ thuộc về duy nhất một cầu thủ).
+    \item Tính bao đóng và xác định khóa ứng viên:
+    $$\{\text{MaHD}\}^+ = U_5, \quad \{\text{MaCauThu}, \text{MaDoiHienTai}\}^+ = U_5, \quad \{\text{MaDoiHienTai}, \text{SoAo}\}^+ = U_5.$$
+    Do đó quan hệ có 3 khóa ứng viên:
+    $$K_1 = \{\text{MaHD}\}, \quad K_2 = \{\text{MaCauThu}, \text{MaDoiHienTai}\}, \quad K_3 = \{\text{MaDoiHienTai}, \text{SoAo}\}.$$
+    \item Kiểm tra điều kiện BCNF: Vế trái của cả ba phụ thuộc hàm $f_{5.1}, f_{5.2}, f_{5.3}$ đều là các khóa ứng viên của $U_5$.
+    \item \textbf{Kết luận}: Quan hệ \texttt{HOP\_DONG\_CAU\_THU} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ TRONG\_TAI}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaTrongTai}, \text{HoTen}, \text{NgaySinh}, \text{QueQuan}, \text{CapBac}\}$.
+    \item Tập thuộc tính: $U_6 = \{\text{MaTrongTai}, \text{HoTen}, \text{NgaySinh}, \text{QueQuan}, \text{CapBac}\}$.
     \item Tập phụ thuộc hàm $F_6$:
     $$f_{6.1}: \quad \text{MaTrongTai} \rightarrow \{\text{HoTen}, \text{NgaySinh}, \text{QueQuan}, \text{CapBac}\}$$
-    \item Khóa ứng viên: $K = \{\text{MaTrongTai}\}$.
+    \item Tính bao đóng và xác định khóa ứng viên: $\{\text{MaTrongTai}\}^+ = U_6 \implies K = \{\text{MaTrongTai}\}$.
     \item Kiểm tra điều kiện BCNF: Vế trái $\text{MaTrongTai}$ là siêu khóa.
-    \item \textbf{Kết luận}: Quan hệ \texttt{TRONG\_TAI} đạt dạng chuẩn \textbf{BCNF}.
+    \item \textbf{Kết luận}: Quan hệ \texttt{TRONG\_TAI} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ VONG\_DAU}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaVong}, \text{TenVong}, \text{ThuTu}\}$.
+    \item Tập thuộc tính: $U_7 = \{\text{MaVong}, \text{TenVong}, \text{ThuTu}\}$.
     \item Tập phụ thuộc hàm $F_7$:
     \begin{align*}
         f_{7.1}: & \quad \text{MaVong} \rightarrow \{\text{TenVong}, \text{ThuTu}\} \\
-        f_{7.2}: & \quad \text{ThuTu} \rightarrow \{\text{MaVong}, \text{TenVong}\}
+        f_{7.2}: & \quad \text{TenVong} \rightarrow \{\text{MaVong}, \text{ThuTu}\} \\
+        f_{7.3}: & \quad \text{ThuTu} \rightarrow \{\text{MaVong}, \text{TenVong}\}
     \end{align*}
-    \item Khóa ứng viên: $K_1 = \{\text{MaVong}\}$, $K_2 = \{\text{ThuTu}\}$.
-    \item Kiểm tra điều kiện BCNF: Vế trái của cả hai phụ thuộc hàm đều là siêu khóa.
-    \item \textbf{Kết luận}: Quan hệ \texttt{VONG\_DAU} đạt dạng chuẩn \textbf{BCNF}.
+    \item Tính bao đóng và xác định khóa ứng viên: $K_1 = \{\text{MaVong}\}$, $K_2 = \{\text{TenVong}\}$, $K_3 = \{\text{ThuTu}\}$.
+    \item Kiểm tra điều kiện BCNF: Vế trái của $f_{7.1}, f_{7.2}, f_{7.3}$ đều là siêu khóa.
+    \item \textbf{Kết luận}: Quan hệ \texttt{VONG\_DAU} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ TRAN\_DAU}
 \begin{itemize}
-    \item Tập thuộc tính:
-    $$U = \{\text{MaTran}, \text{MaVong}, \text{MaDoiNha}, \text{MaDoiKhach}, \text{MaSan}, \text{NgayGio}, \text{GiaVe}, \text{SoKhach}, \text{BanThangNha}, \text{BanThangKhach}, \dots\}$$
-    \item Tập phụ thuộc hàm $F_8$:
+    \item Tập thuộc tính đầy đủ gồm 15 thuộc tính:
     \begin{align*}
-        f_{8.1}: & \quad \text{MaTran} \rightarrow U \setminus \{\text{MaTran}\} \\
-        f_{8.2}: & \quad \{\text{MaDoiNha}, \text{MaDoiKhach}\} \rightarrow U \setminus \{\text{MaDoiNha}, \text{MaDoiKhach}\}
+        U_8 = \{&\text{MaTran}, \text{MaVong}, \text{MaDoiNha}, \text{MaDoiKhach}, \text{MaSan}, \text{NgayGio}, \text{GiaVe}, \text{SoKhach}, \\
+        &\text{BanThangNha}, \text{BanThangKhach}, \text{TheVangNha}, \text{TheVangKhach}, \text{TheDoNha}, \text{TheDoKhach}, \text{TrangThai}\}.
     \end{align*}
-    (Do mỗi cặp đối đầu sân nhà -- sân khách chỉ diễn ra duy nhất một trận trong cả mùa giải).
-    \item Khóa ứng viên: $K_1 = \{\text{MaTran}\}$, $K_2 = \{\text{MaDoiNha}, \text{MaDoiKhach}\}$.
-    \item Kiểm tra điều kiện BCNF: Cả hai vế trái $\text{MaTran}$ và $\{\text{MaDoiNha}, \text{MaDoiKhach}\}$ đều là siêu khóa.
-    \item \textbf{Kết luận}: Quan hệ \texttt{TRAN\_DAU} đạt dạng chuẩn \textbf{BCNF}.
+    \item Tập phụ thuộc hàm $F_8$ theo thể thức thi đấu vòng tròn 2 lượt:
+    \begin{align*}
+        f_{8.1}: & \quad \text{MaTran} \rightarrow U_8 \setminus \{\text{MaTran}\} \\
+        f_{8.2}: & \quad \{\text{MaDoiNha}, \text{MaDoiKhach}\} \rightarrow U_8 \setminus \{\text{MaDoiNha}, \text{MaDoiKhach}\} \\
+        f_{8.3}: & \quad \{\text{MaVong}, \text{MaDoiNha}\} \rightarrow U_8 \setminus \{\text{MaVong}, \text{MaDoiNha}\} \\
+        f_{8.4}: & \quad \{\text{MaVong}, \text{MaDoiKhach}\} \rightarrow U_8 \setminus \{\text{MaVong}, \text{MaDoiKhach}\}
+    \end{align*}
+    \textit{Giải thích ngữ nghĩa}:
+    \begin{itemize}
+        \item Mỗi cặp có thứ tự (Đội chủ nhà, Đội khách) chỉ gặp nhau đúng 1 trận trong suốt mùa giải nên $\{\text{MaDoiNha}, \text{MaDoiKhach}\}$ xác định duy nhất trận đấu ($f_{8.2}$).
+        \item Trong một vòng đấu, mỗi đội bóng chỉ thi đấu tối đa 1 trận nên cặp $\{\text{MaVong}, \text{MaDoiNha}\}$ và $\{\text{MaVong}, \text{MaDoiKhach}\}$ cũng xác định duy nhất trận đấu ($f_{8.3}, f_{8.4}$).
+        \item Thuộc tính $\text{MaSan}$ trong $\text{TRAN\_DAU}$ ghi nhận sân vận động thực tế tổ chức trận đấu (có thể là sân trung lập khi sân nhà bảo trì hoặc chịu án phạt kỷ luật của Ban Tổ chức), do đó không tồn tại phụ thuộc hàm $\text{MaDoiNha} \rightarrow \text{MaSan}$ trên lược đồ $\text{TRAN\_DAU}$.
+    \end{itemize}
+    \item Tính bao đóng và xác định khóa ứng viên:
+    $$\{\text{MaTran}\}^+ = \{\text{MaDoiNha}, \text{MaDoiKhach}\}^+ = \{\text{MaVong}, \text{MaDoiNha}\}^+ = \{\text{MaVong}, \text{MaDoiKhach}\}^+ = U_8.$$
+    Quan hệ có 4 khóa ứng viên: $K_1 = \{\text{MaTran}\}$, $K_2 = \{\text{MaDoiNha}, \text{MaDoiKhach}\}$, $K_3 = \{\text{MaVong}, \text{MaDoiNha}\}$, $K_4 = \{\text{MaVong}, \text{MaDoiKhach}\}$.
+    \item Kiểm tra điều kiện BCNF: Mọi vế trái trong $F_8$ đều là khóa ứng viên của $U_8$.
+    \item \textbf{Kết luận}: Quan hệ \texttt{TRAN\_DAU} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ PHAN\_CONG\_TRONG\_TAI}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaTran}, \text{VaiTro}, \text{MaTrongTai}\}$.
+    \item Tập thuộc tính: $U_9 = \{\text{MaTran}, \text{VaiTro}, \text{MaTrongTai}\}$.
     \item Tập phụ thuộc hàm $F_9$:
     \begin{align*}
         f_{9.1}: & \quad \{\text{MaTran}, \text{VaiTro}\} \rightarrow \text{MaTrongTai} \\
         f_{9.2}: & \quad \{\text{MaTran}, \text{MaTrongTai}\} \rightarrow \text{VaiTro}
     \end{align*}
-    (Trong một trận đấu, mỗi vai trò chỉ có đúng một trọng tài; và mỗi trọng tài chỉ đảm nhiệm tối đa một vai trò).
-    \item Khóa ứng viên: $K_1 = \{\text{MaTran}, \text{VaiTro}\}$, $K_2 = \{\text{MaTran}, \text{MaTrongTai}\}$.
-    \item Kiểm tra điều kiện BCNF: Vế trái của $f_{9.1}$ và $f_{9.2}$ đều là siêu khóa của quan hệ.
-    \item \textbf{Kết luận}: Quan hệ \texttt{PHAN\_CONG\_TRONG\_TAI} đạt dạng chuẩn \textbf{BCNF}.
+    (Trong một trận đấu, mỗi vị trí vai trò chỉ do đúng 1 trọng tài đảm nhiệm; đồng thời 1 trọng tài chỉ đảm nhiệm tối đa 1 vai trò trong trận đó).
+    \item Tính bao đóng và xác định khóa ứng viên giao nhau:
+    $$\{\text{MaTran}, \text{VaiTro}\}^+ = U_9, \quad \{\text{MaTran}, \text{MaTrongTai}\}^+ = U_9.$$
+    Hai khóa ứng viên là $K_1 = \{\text{MaTran}, \text{VaiTro}\}$ và $K_2 = \{\text{MaTran}, \text{MaTrongTai}\}$ giao nhau tại thuộc tính khóa $\text{MaTran}$.
+    \item Kiểm tra điều kiện BCNF: Vế trái của $f_{9.1}$ là $K_1$ và vế trái của $f_{9.2}$ là $K_2$, cả hai đều là siêu khóa của $U_9$.
+    \item \textbf{Kết luận}: Quan hệ \texttt{PHAN\_CONG\_TRONG\_TAI} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ DANG\_KY\_THI\_DAU}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiDangKy}, \text{SoAoTran}\}$.
+    \item Tập thuộc tính: $U_{10} = \{\text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{VaiTroThiDau}, \text{SoAoDangKy}\}$.
     \item Tập phụ thuộc hàm $F_{10}$:
-    $$f_{10.1}: \quad \{\text{MaTran}, \text{MaCauThu}\} \rightarrow \{\text{MaDoi}, \text{LoaiDangKy}, \text{SoAoTran}\}$$
-    \item Khóa ứng viên: $K = \{\text{MaTran}, \text{MaCauThu}\}$.
-    \item Kiểm tra điều kiện BCNF: Vế trái $\{\text{MaTran}, \text{MaCauThu}\}$ là siêu khóa duy nhất.
-    \item \textbf{Kết luận}: Quan hệ \texttt{DANG\_KY\_THI\_DAU} đạt dạng chuẩn \textbf{BCNF}.
+    \begin{align*}
+        f_{10.1}: & \quad \{\text{MaTran}, \text{MaCauThu}\} \rightarrow \{\text{MaDoi}, \text{VaiTroThiDau}, \text{SoAoDangKy}\} \\
+        f_{10.2}: & \quad \{\text{MaTran}, \text{MaDoi}, \text{SoAoDangKy}\} \rightarrow \{\text{MaCauThu}, \text{VaiTroThiDau}\}
+    \end{align*}
+    (Trong đó $f_{10.1}$ thể hiện mỗi cầu thủ trong một trận chỉ đăng ký thi đấu cho một đội với một vai trò và một số áo; $f_{10.2}$ thể hiện trong một trận đấu, mỗi số áo đăng ký của một đội bóng xác định duy nhất cầu thủ mang áo đó).
+    \item Tính bao đóng và xác định khóa ứng viên:
+    $$\{\text{MaTran}, \text{MaCauThu}\}^+ = U_{10} \implies K_1 = \{\text{MaTran}, \text{MaCauThu}\},$$
+    $$\{\text{MaTran}, \text{MaDoi}, \text{SoAoDangKy}\}^+ = U_{10} \implies K_2 = \{\text{MaTran}, \text{MaDoi}, \text{SoAoDangKy}\}.$$
+    \item Kiểm tra điều kiện BCNF: Vế trái của cả $f_{10.1}$ và $f_{10.2}$ đều là siêu khóa của $U_{10}$.
+    \item \textbf{Kết luận}: Quan hệ \texttt{DANG\_KY\_THI\_DAU} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
-\subsection{Quan hệ SU\_KIEN\_TRAN\_DAU}
+\subsection{Quan hệ SU\_KIEN\_TRAN\_DAU\_BAN\_DAU (Phát hiện vi phạm chuẩn BCNF)}
 \begin{itemize}
-    \item Tập thuộc tính: $U = \{\text{MaSuKien}, \text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}$.
+    \item Tập thuộc tính ban đầu: $U_{11} = \{\text{MaSuKien}, \text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}$.
     \item Tập phụ thuộc hàm $F_{11}$:
-    $$f_{11.1}: \quad \text{MaSuKien} \rightarrow \{\text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}$$
-    \item Khóa ứng viên: $K = \{\text{MaSuKien}\}$.
-    \item Kiểm tra điều kiện BCNF: Vế trái $\text{MaSuKien}$ là siêu khóa.
-    \item \textbf{Kết luận}: Quan hệ \texttt{SU\_KIEN\_TRAN\_DAU} đạt dạng chuẩn \textbf{BCNF}.
+    \begin{align*}
+        f_{11.1}: & \quad \text{MaSuKien} \rightarrow \{\text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\} \\
+        f_{11.2}: & \quad \{\text{MaTran}, \text{MaCauThu}\} \rightarrow \text{MaDoi}
+    \end{align*}
+    \item Tính bao đóng thuộc tính:
+    \begin{itemize}
+        \item Bao đóng của $\{\text{MaSuKien}\}$:
+        $$\{\text{MaSuKien}\}^+ = \{\text{MaSuKien}, \text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\} = U_{11}.$$
+        Suy ra khóa ứng viên duy nhất của quan hệ là $K = \{\text{MaSuKien}\}$.
+        \item Bao đóng của $\{\text{MaTran}, \text{MaCauThu}\}$:
+        $$\{\text{MaTran}, \text{MaCauThu}\}^+ = \{\text{MaTran}, \text{MaCauThu}, \text{MaDoi}\} \neq U_{11}$$
+        (Do một cầu thủ trong cùng một trận đấu có thể ghi nhiều bàn thắng hoặc nhận nhiều thẻ phạt ở các phút khác nhau, nên $\{\text{MaTran}, \text{MaCauThu}\}$ không xác định được $\text{MaSuKien}$, $\text{LoaiSuKien}$ và $\text{PhutGhiNhan}$).
+    \end{itemize}
+    \item Kiểm tra điều kiện BCNF:
+    Xét phụ thuộc hàm không tầm thường $f_{11.2}: \{\text{MaTran}, \text{MaCauThu}\} \rightarrow \text{MaDoi}$. Vế trái $X = \{\text{MaTran}, \text{MaCauThu}\}$ \textbf{không phải là siêu khóa} của $U_{11}$ (đồng thời $\text{MaDoi}$ cũng không phải là thuộc tính khóa).
+    \item \textbf{Kết luận}: Quan hệ \texttt{SU\_KIEN\_TRAN\_DAU\_BAN\_DAU} \textbf{vi phạm chuẩn 3NF và vi phạm chuẩn BCNF} do tồn tại phụ thuộc hàm bắc cầu $\text{MaSuKien} \rightarrow \{\text{MaTran}, \text{MaCauThu}\} \rightarrow \text{MaDoi}$.
 \end{itemize}
 
-% \section{Phân tích thuật toán tách chuẩn BCNF}
+\section{Áp dụng thuật toán tách chuẩn BCNF cho quan hệ vi phạm}
 
-% Mục này trình bày một ví dụ thiết kế chưa chuẩn hóa và các bước áp dụng thuật toán tách để đưa quan hệ về dạng chuẩn BCNF.
+\subsection{Phân tích dị thường dữ liệu trước khi tách}
+Việc lưu trữ dư thừa thuộc tính $\text{MaDoi}$ trong bảng $\text{SU\_KIEN\_TRAN\_DAU\_BAN\_DAU}$ gây ra các dị thường nghiêm trọng:
+\begin{enumerate}
+    \item \textbf{Dị thường thêm}: Khi thêm một sự kiện bàn thắng hoặc thẻ phạt, người nhập có thể gán nhầm $\text{MaDoi}$ không khớp với đội bóng mà cầu thủ $\text{MaCauThu}$ đã đăng ký thi đấu trong trận $\text{MaTran}$ tại bảng $\text{DANG\_KY\_THI\_DAU}$.
+    \item \textbf{Dị thường sửa}: Nếu cần hiệu chỉnh thông tin đội bóng đăng ký của cầu thủ trong trận, dữ liệu phải được cập nhật đồng thời trên cả $\text{DANG\_KY\_THI\_DAU}$ lẫn mọi bản ghi sự kiện của cầu thủ đó trong trận, dễ dẫn đến mâu thuẫn dữ liệu.
+\end{enumerate}
 
-% \subsection{Tình huống thiết kế vi phạm chuẩn hóa}
-% Giả sử người thiết kế gộp chung thông tin của Trận đấu và Sân vận động vào trong một bảng duy nhất:
-% $$R_{\text{Gop}}(\underline{\text{MaTran}}, \text{NgayGio}, \text{MaSan}, \text{TenSan}, \text{DiaChi}, \text{SucChua})$$
+\subsection{Các bước thực hiện thuật toán tách không mất mát thông tin về BCNF}
+Áp dụng thuật toán chuẩn hóa BCNF trên lược đồ $R = \text{SU\_KIEN\_TRAN\_DAU\_BAN\_DAU}(U_{11}, F_{11})$:
+\begin{itemize}
+    \item \textbf{Bước 1}: Xác định phụ thuộc hàm gây vi phạm BCNF trên $R$:
+    $$f_{11.2}: X \rightarrow Y \quad \text{với} \quad X = \{\text{MaTran}, \text{MaCauThu}\}, \quad Y = \{\text{MaDoi}\}.$$
+    \item \textbf{Bước 2}: Phân rã $R$ thành hai lược đồ con $R_1$ và $R_2$ theo quy tắc $R_1 = X \cup Y$ và $R_2 = U_{11} \setminus Y$:
+    \begin{align*}
+        R_1 &= \{\underline{\mathbf{MaTran}}, \underline{\mathbf{MaCauThu}}, \text{MaDoi}\} \\
+        R_2 &= \{\underline{\mathbf{MaSuKien}}, \textit{MaTran}, \textit{MaCauThu}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}
+    \end{align*}
+    \item \textbf{Bước 3 (Hợp nhất lược đồ con dư thừa)}:
+    Nhận thấy lược đồ $R_1(\underline{\mathbf{MaTran}}, \underline{\mathbf{MaCauThu}}, \text{MaDoi})$ chính là phép chiếu trên tập thuộc tính con của lược đồ $\text{DANG\_KY\_THI\_DAU}(\underline{\mathbf{MaTran}}, \underline{\mathbf{MaCauThu}}, \text{MaDoi}, \text{VaiTroThiDau}, \text{SoAoDangKy})$ vốn đã tồn tại trong cơ sở dữ liệu với cùng khóa chính $(\text{MaTran}, \text{MaCauThu})$ và cùng phụ thuộc hàm $\{\text{MaTran}, \text{MaCauThu}\} \rightarrow \text{MaDoi}$.
+    Do đó, ta không cần tạo thêm bảng vật lý cho $R_1$ mà tích hợp trực tiếp $R_1$ vào $\text{DANG\_KY\_THI\_DAU}$, đồng thời thiết lập khóa ngoại tổ hợp từ $R_2$ (chính là bảng $\text{SU\_KIEN\_TRAN\_DAU}$ sau chuẩn hóa) tham chiếu tới $\text{DANG\_KY\_THI\_DAU}$:
+    $$\text{SU\_KIEN\_TRAN\_DAU}(\underline{\mathbf{MaSuKien}}, \textit{MaTran}, \textit{MaCauThu}, \text{LoaiSuKien}, \text{PhutGhiNhan})$$
+    $$\textit{Khóa ngoại tổ hợp: } (\text{MaTran}, \text{MaCauThu}) \rightarrow \text{DANG\_KY\_THI\_DAU}(\text{MaTran}, \text{MaCauThu}).$$
+\end{itemize}
 
-% Tập phụ thuộc hàm trên $R_{\text{Gop}}$ gồm:
-% \begin{align*}
-%     f_1: & \quad \text{MaTran} \rightarrow \{\text{NgayGio}, \text{MaSan}, \text{TenSan}, \text{DiaChi}, \text{SucChua}\} \\
-%     f_2: & \quad \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\}
-% \end{align*}
+\subsection{Chứng minh tính chất toán học của phép tách}
+\begin{enumerate}
+    \item \textbf{Chứng minh tính kết nối không mất mát thông tin}:
+    Theo định lý Heath, phép phân rã $R$ thành $(R_1, R_2)$ là kết nối không mất mát thông tin khi và chỉ khi $(R_1 \cap R_2) \rightarrow (R_1 \setminus R_2) \in F^+$ hoặc $(R_1 \cap R_2) \rightarrow (R_2 \setminus R_1) \in F^+$.
+    Ta có:
+    $$R_1 \cap R_2 = \{\text{MaTran}, \text{MaCauThu}\}, \quad R_1 \setminus R_2 = \{\text{MaDoi}\}.$$
+    Vì $\{\text{MaTran}, \text{MaCauThu}\} \rightarrow \{\text{MaDoi}\} \in F_{11}$ (tức $R_1 \cap R_2$ là siêu khóa của $R_1$), nên phép tách bảo toàn kết nối không mất mát thông tin:
+    $$\text{SU\_KIEN\_TRAN\_DAU\_BAN\_DAU} = \pi_{U_{11}}(\text{SU\_KIEN\_TRAN\_DAU} \bowtie_{\text{MaTran}, \text{MaCauThu}} \text{DANG\_KY\_THI\_DAU}).$$
+    \item \textbf{Chứng minh tính bảo toàn phụ thuộc hàm}:
+    \begin{itemize}
+        \item Phụ thuộc hàm $f_{11.1}: \text{MaSuKien} \rightarrow \{\text{MaTran}, \text{MaCauThu}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}$ được bảo toàn nguyên vẹn trên quan hệ $\text{SU\_KIEN\_TRAN\_DAU}$.
+        \item Phụ thuộc hàm $f_{11.2}: \{\text{MaTran}, \text{MaCauThu}\} \rightarrow \text{MaDoi}$ được bảo toàn nguyên vẹn trên quan hệ $\text{DANG\_KY\_THI\_DAU}$.
+    \end{itemize}
+    Do đó $(F_{R_1} \cup F_{R_2})^+ = F_{11}^+$, phép tách bảo toàn hoàn toàn tập phụ thuộc hàm.
+    \item \textbf{Kiểm tra chuẩn BCNF sau khi tách}:
+    Quan hệ $\text{SU\_KIEN\_TRAN\_DAU}$ mới có tập thuộc tính $U'_{11} = \{\text{MaSuKien}, \text{MaTran}, \text{MaCauThu}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}$ và phụ thuộc hàm duy nhất $\text{MaSuKien} \rightarrow U'_{11} \setminus \{\text{MaSuKien}\}$ với vế trái $\text{MaSuKien}$ là khóa chính. Như vậy, toàn bộ 11 lược đồ quan hệ của hệ thống đều đạt chuẩn \textbf{BCNF} tuyệt đối.
+\end{enumerate}
 
-% \paragraph{Phân tích vi phạm BCNF:}
-% \begin{itemize}
-%     \item Khóa chính duy nhất của $R_{\text{Gop}}$ là $\{\text{MaTran}\}$.
-%     \item Xét phụ thuộc hàm $f_2: \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\}$. Vế trái $\text{MaSan}$ không phải là siêu khóa của $R_{\text{Gop}}$ (vì bao đóng của $\text{MaSan}$ không chứa thuộc tính $\text{MaTran}$ và $\text{NgayGio}$).
-%     \item Do đó, quan hệ $R_{\text{Gop}}$ vi phạm định nghĩa dạng chuẩn BCNF và vi phạm dạng chuẩn 3 do tồn tại phụ thuộc bắc cầu.
-%     \item Hậu quả là thông tin tên sân, địa chỉ, sức chứa bị lặp lại ở mọi trận đấu diễn ra trên sân đó, dẫn đến các dị thường khi thêm, sửa hoặc xóa dữ liệu.
-% \end{itemize}
-
-% \subsection{Các bước thực hiện thuật toán tách BCNF}
-% Thuật toán tách được thực hiện như sau:
-% \begin{itemize}
-%     \item \textbf{Bước 1}: Chọn phụ thuộc hàm vi phạm điều kiện BCNF là $f_2: \text{MaSan} \rightarrow \{\text{TenSan}, \text{DiaChi}, \text{SucChua}\}$.
-%     \item \textbf{Bước 2}: Tách $R_{\text{Gop}}$ thành hai lược đồ quan hệ con $R_1$ và $R_2$:
-%     $$R_1 = \{\underline{\mathbf{MaSan}}, \text{TenSan}, \text{DiaChi}, \text{SucChua}\} \equiv \text{SAN\_VAN\_DONG}$$
-%     $$R_2 = \{\underline{\mathbf{MaTran}}, \text{NgayGio}, \textit{MaSan}\} \equiv \text{TRAN\_DAU\_RUT\_GON}$$
-%     \item \textbf{Bước 3}: Kiểm tra các tính chất của phép tách:
-%     \begin{enumerate}
-%         \item \textit{Tính kết nối không mất mát thông tin}:
-%         Giao của hai quan hệ là $R_1 \cap R_2 = \{\text{MaSan}\}$. Vì $\text{MaSan}$ là khóa chính của $R_1$ nên phép tách bảo toàn toàn bộ dữ liệu ban đầu:
-%         $$R_{\text{Gop}} = R_1 \bowtie R_2.$$
-%         \item \textit{Tính bảo toàn phụ thuộc hàm}: Các phụ thuộc hàm trong tập ban đầu đều được duy trì trong các bảng con.
-%         \item \textit{Kiểm tra lại điều kiện BCNF}: Cả hai quan hệ $R_1$ và $R_2$ đều thỏa mãn dạng chuẩn BCNF.
-%     \end{enumerate}
-% \end{itemize}
-
-% Kết quả này cho thấy việc tách các thực thể theo mô hình thiết kế đã loại bỏ hoàn toàn dư thừa dữ liệu.
+\begin{figure}[H]
+	\centering
+	\includegraphics[angle=90, width=0.7\textheight, keepaspectratio]{Figures/RSD.png}
+    \caption{Sơ đồ cấu trúc lược đồ quan hệ và mối liên kết khóa sau chuẩn hóa BCNF}
+    \label{fig:relational_diagram}
+\end{figure}
