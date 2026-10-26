@@ -53,6 +53,7 @@ CREATE TABLE CAU_THU (
 );
 
 -- 5. BẢNG HỢP ĐỒNG CẦU THỦ & ĐỘI BÓNG THI ĐẤU
+-- Lưu trữ toàn bộ lịch sử hợp đồng (Chính thức, Cho mượn, Đã thanh lý)
 CREATE TABLE HOP_DONG_CAU_THU (
     MaHD VARCHAR(10) PRIMARY KEY,
     MaCauThu VARCHAR(10) NOT NULL REFERENCES CAU_THU(MaCauThu) ON UPDATE CASCADE,
@@ -61,11 +62,20 @@ CREATE TABLE HOP_DONG_CAU_THU (
     SoAo INT NOT NULL CHECK (SoAo BETWEEN 1 AND 35),
     NgayBatDau DATE NOT NULL,
     NgayKetThuc DATE NOT NULL,
-    TrangThai VARCHAR(20) NOT NULL CHECK (TrangThai IN ('ChinhThuc', 'ChoMuon', 'ThanhLy')),
-    CHECK (NgayKetThuc >= NgayBatDau),
-    UNIQUE (MaCauThu, MaDoiHienTai),
-    UNIQUE (MaDoiHienTai, SoAo)
+    TrangThai VARCHAR(20) NOT NULL CHECK (TrangThai IN ('ChinhThuc', 'ChoMuon', 'TamDung', 'ThanhLy')),
+    CHECK (NgayKetThuc >= NgayBatDau)
 );
+
+-- Chỉ mục duy nhất có điều kiện (Partial Unique Index) cho các hợp đồng đang hiệu lực:
+-- 1. Tại một thời điểm, mỗi cầu thủ chỉ có tối đa 1 hợp đồng đang thi đấu ('ChinhThuc' hoặc 'ChoMuon')
+CREATE UNIQUE INDEX idx_uq_cauthu_active_contract 
+ON HOP_DONG_CAU_THU (MaCauThu) 
+WHERE TrangThai IN ('ChinhThuc', 'ChoMuon');
+
+-- 2. Trong cùng một đội bóng, không có 2 cầu thủ nào trùng số áo trong các hợp đồng đang hiệu lực
+CREATE UNIQUE INDEX idx_uq_doihientai_soao_active 
+ON HOP_DONG_CAU_THU (MaDoiHienTai, SoAo) 
+WHERE TrangThai IN ('ChinhThuc', 'ChoMuon');
 
 -- 6. BẢNG TRỌNG TÀI
 CREATE TABLE TRONG_TAI (
@@ -131,7 +141,7 @@ CREATE TABLE SU_KIEN_TRAN_DAU (
     MaSuKien VARCHAR(15) PRIMARY KEY,
     MaTran VARCHAR(10) NOT NULL,
     MaCauThu VARCHAR(10) NOT NULL,
-    LoaiSuKien VARCHAR(20) NOT NULL CHECK (LoaiSuKien IN ('BanThang', 'TheVang', 'TheDo')),
+    LoaiSuKien VARCHAR(20) NOT NULL CHECK (LoaiSuKien IN ('BanThang', 'PhanLuoi', 'TheVang', 'TheDo')),
     PhutGhiNhan INT NOT NULL CHECK (PhutGhiNhan BETWEEN 1 AND 120),
     FOREIGN KEY (MaTran, MaCauThu) REFERENCES DANG_KY_THI_DAU(MaTran, MaCauThu) ON DELETE CASCADE ON UPDATE CASCADE
 );

@@ -257,31 +257,40 @@ UNION ALL
 SELECT 'Site 0 (Tái thiết toàn cục)' AS Tram, COUNT(*) AS SoTran FROM site0_trungtam.vw_global_tran_dau;
 
 -- 7.2. Truy vấn Top 10 Vua phá lưới toàn giải trên kiến trúc phân tán (Tối ưu đẩy phép gom nhóm xuống từng Trạm)
+WITH BanThangPhanTan AS (
+    SELECT local_agg.MaCauThu, SUM(local_agg.SoBan) AS TongBanThang
+    FROM (
+        SELECT sk1.MaCauThu, COUNT(*) AS SoBan
+        FROM site1_mienbac.SU_KIEN_TRAN_DAU_1 sk1
+        WHERE sk1.LoaiSuKien = 'BanThang'
+        GROUP BY sk1.MaCauThu
+        UNION ALL
+        SELECT sk2.MaCauThu, COUNT(*) AS SoBan
+        FROM site2_miennam.SU_KIEN_TRAN_DAU_2 sk2
+        WHERE sk2.LoaiSuKien = 'BanThang'
+        GROUP BY sk2.MaCauThu
+    ) local_agg
+    GROUP BY local_agg.MaCauThu
+),
+DoiBongHienTai AS (
+    SELECT DISTINCT ON (hd.MaCauThu)
+        hd.MaCauThu,
+        db.TenDoi
+    FROM site0_trungtam.HOP_DONG_CAU_THU hd
+    JOIN site0_trungtam.DOI_BONG db ON hd.MaDoiHienTai = db.MaDoi
+    WHERE hd.TrangThai IN ('ChinhThuc', 'ChoMuon')
+    ORDER BY hd.MaCauThu, hd.NgayBatDau DESC
+)
 SELECT
-    ROW_NUMBER() OVER (ORDER BY SUM(local_agg.SoBan) DESC, ct.HoTen ASC) AS XepHang,
+    ROW_NUMBER() OVER (ORDER BY b.TongBanThang DESC, ct.HoTen ASC) AS XepHang,
     ct.MaCauThu,
     ct.HoTen,
-    db.TenDoi,
-    SUM(local_agg.SoBan) AS TongBanThang
-FROM (
-    SELECT sk1.MaCauThu, dk1.MaDoi, COUNT(*) AS SoBan
-    FROM site1_mienbac.SU_KIEN_TRAN_DAU_1 sk1
-    JOIN site1_mienbac.DANG_KY_THI_DAU_1 dk1
-      ON sk1.MaTran = dk1.MaTran AND sk1.MaCauThu = dk1.MaCauThu
-    WHERE sk1.LoaiSuKien = 'BanThang'
-    GROUP BY sk1.MaCauThu, dk1.MaDoi
-    UNION ALL
-    SELECT sk2.MaCauThu, dk2.MaDoi, COUNT(*) AS SoBan
-    FROM site2_miennam.SU_KIEN_TRAN_DAU_2 sk2
-    JOIN site2_miennam.DANG_KY_THI_DAU_2 dk2
-      ON sk2.MaTran = dk2.MaTran AND sk2.MaCauThu = dk2.MaCauThu
-    WHERE sk2.LoaiSuKien = 'BanThang'
-    GROUP BY sk2.MaCauThu, dk2.MaDoi
-) local_agg
-JOIN site0_trungtam.CAU_THU ct ON local_agg.MaCauThu = ct.MaCauThu
-JOIN site0_trungtam.DOI_BONG db ON local_agg.MaDoi = db.MaDoi
-GROUP BY ct.MaCauThu, ct.HoTen, db.TenDoi
-ORDER BY TongBanThang DESC, ct.HoTen ASC
+    COALESCE(d.TenDoi, 'Tự do') AS TenDoiHienTai,
+    b.TongBanThang
+FROM BanThangPhanTan b
+JOIN site0_trungtam.CAU_THU ct ON b.MaCauThu = ct.MaCauThu
+LEFT JOIN DoiBongHienTai d ON b.MaCauThu = d.MaCauThu
+ORDER BY b.TongBanThang DESC, ct.HoTen ASC
 LIMIT 10;
 
 -- 7.3. Kiểm toán doanh thu bán vé toàn giải tại Site 0 (Kết hợp mảnh dọc tại Site 0 và mảnh ngang từ Site 1, 2)

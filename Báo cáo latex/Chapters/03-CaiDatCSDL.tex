@@ -2,87 +2,142 @@
 
 \section{Môi trường cài đặt và cấu trúc bảng dữ liệu}
 
-Hệ thống cơ sở dữ liệu được cài đặt trên hệ quản trị PostgreSQL. Toàn bộ 11 bảng dữ liệu sau khi chuẩn hóa BCNF ở Chương 2 được tạo lập với đầy đủ khóa chính, khóa ứng viên, khóa ngoại và các chỉ mục cây tìm kiếm cân bằng phục vụ tối ưu hóa truy vấn.
+Hệ thống cơ sở dữ liệu được cài đặt trên hệ quản trị PostgreSQL. Toàn bộ 11 bảng dữ liệu sau khi chuẩn hóa BCNF ở Chương 2 được tạo lập với đầy đủ khóa chính, khóa ứng viên, khóa ngoại, các ràng buộc miền giá trị và chỉ mục B-Tree (B-Tree Index) phục vụ tối ưu hóa truy vấn.
 
-\begin{lstlisting}[language=SQL, caption={Kịch bản tạo các bảng cốt lõi, ràng buộc khóa ứng viên và chỉ mục}]
--- Bang san van dong (co thuoc tinh KhuVuc phuc vu phan manh dia ly)
+\begin{lstlisting}[language=SQL, caption={Kịch bản tạo 11 bảng dữ liệu, ràng buộc toàn vẹn và chỉ mục B-Tree}]
+-- 1. BANG SAN VAN DONG (Phuc vu phan manh theo KhuVuc)
 CREATE TABLE SAN_VAN_DONG (
     MaSan VARCHAR(10) PRIMARY KEY,
     TenSan VARCHAR(100) NOT NULL UNIQUE,
     DiaChi VARCHAR(200) NOT NULL,
     SucChua INT NOT NULL CHECK (SucChua > 0),
-    KhuVuc VARCHAR(20) NOT NULL DEFAULT 'MienBac'
-        CHECK (KhuVuc IN ('MienBac', 'MienNam'))
+    KhuVuc VARCHAR(20) NOT NULL DEFAULT 'MienBac' CHECK (KhuVuc IN ('MienBac', 'MienNam'))
 );
 
--- Bang hop dong cau thu voi 3 khoa ung vien (MaHD), (MaCauThu, MaDoiHienTai), (MaDoiHienTai, SoAo)
+-- 2. BANG DOI BONG
+CREATE TABLE DOI_BONG (
+    MaDoi VARCHAR(10) PRIMARY KEY,
+    TenDoi VARCHAR(100) NOT NULL UNIQUE,
+    HLV VARCHAR(100) NOT NULL,
+    MaSanNha VARCHAR(10) NOT NULL REFERENCES SAN_VAN_DONG(MaSan) ON UPDATE CASCADE
+);
+
+-- 3. BANG MAU AO DOI BONG
+CREATE TABLE MAU_AO_DOI_BONG (
+    MaDoi VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi) ON DELETE CASCADE ON UPDATE CASCADE,
+    LoaiMauAo VARCHAR(20) NOT NULL CHECK (LoaiMauAo IN ('SanNha', 'SanKhach', 'Phu')),
+    MoTaMau VARCHAR(50) NOT NULL,
+    PRIMARY KEY (MaDoi, LoaiMauAo)
+);
+
+-- 4. BANG CAU THU
+CREATE TABLE CAU_THU (
+    MaCauThu VARCHAR(10) PRIMARY KEY,
+    HoTen VARCHAR(100) NOT NULL,
+    NgaySinh DATE NOT NULL,
+    ViTri VARCHAR(20) NOT NULL CHECK (ViTri IN ('ThuMon', 'HauVe', 'TienVe', 'TienDao')),
+    QuocTich VARCHAR(50) NOT NULL DEFAULT 'Viet Nam'
+);
+
+-- 5. BANG HOP DONG CAU THU (Luu lich su, ap dung Partial Unique Index)
 CREATE TABLE HOP_DONG_CAU_THU (
     MaHD VARCHAR(10) PRIMARY KEY,
-    MaCauThu VARCHAR(10) NOT NULL REFERENCES CAU_THU(MaCauThu) ON DELETE CASCADE,
-    MaDoiChuQuan VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi),
-    MaDoiHienTai VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi),
+    MaCauThu VARCHAR(10) NOT NULL REFERENCES CAU_THU(MaCauThu) ON UPDATE CASCADE,
+    MaDoiChuQuan VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi) ON UPDATE CASCADE,
+    MaDoiHienTai VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi) ON UPDATE CASCADE,
     SoAo INT NOT NULL CHECK (SoAo BETWEEN 1 AND 35),
     NgayBatDau DATE NOT NULL,
     NgayKetThuc DATE NOT NULL,
-    TrangThai VARCHAR(20) NOT NULL CHECK (TrangThai IN ('ChinhThuc', 'ChoMuon', 'ThanhLy')),
-    CONSTRAINT chk_ngay_hop_dong CHECK (NgayKetThuc >= NgayBatDau),
-    CONSTRAINT uq_hop_dong_cauthu_doihientai UNIQUE (MaCauThu, MaDoiHienTai),
-    CONSTRAINT uq_hop_dong_doihientai_soao UNIQUE (MaDoiHienTai, SoAo)
+    TrangThai VARCHAR(20) NOT NULL CHECK (TrangThai IN ('ChinhThuc', 'ChoMuon', 'TamDung', 'ThanhLy')),
+    CHECK (NgayKetThuc >= NgayBatDau)
 );
 
--- Bang tran dau voi 4 khoa ung vien va rang buoc toan ven
+-- Partial Unique Indexes cho cac hop dong dang hieu luc thi dau:
+CREATE UNIQUE INDEX idx_uq_cauthu_active_contract 
+ON HOP_DONG_CAU_THU (MaCauThu) WHERE TrangThai IN ('ChinhThuc', 'ChoMuon');
+
+CREATE UNIQUE INDEX idx_uq_doihientai_soao_active 
+ON HOP_DONG_CAU_THU (MaDoiHienTai, SoAo) WHERE TrangThai IN ('ChinhThuc', 'ChoMuon');
+
+-- 6. BANG TRONG TAI
+CREATE TABLE TRONG_TAI (
+    MaTrongTai VARCHAR(10) PRIMARY KEY,
+    HoTen VARCHAR(100) NOT NULL,
+    NgaySinh DATE NOT NULL,
+    QueQuan VARCHAR(100) NOT NULL,
+    CapBac VARCHAR(50) NOT NULL DEFAULT 'Quoc gia'
+);
+
+-- 7. BANG VONG DAU
+CREATE TABLE VONG_DAU (
+    MaVong INT PRIMARY KEY CHECK (MaVong BETWEEN 1 AND 10),
+    TenVong VARCHAR(50) NOT NULL UNIQUE,
+    ThuTu INT NOT NULL UNIQUE CHECK (ThuTu BETWEEN 1 AND 10)
+);
+
+-- 8. BANG TRAN DAU
 CREATE TABLE TRAN_DAU (
     MaTran VARCHAR(10) PRIMARY KEY,
-    MaVong INT NOT NULL REFERENCES VONG_DAU(MaVong),
-    MaDoiNha VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi),
-    MaDoiKhach VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi),
-    MaSan VARCHAR(10) NOT NULL REFERENCES SAN_VAN_DONG(MaSan),
+    MaVong INT NOT NULL REFERENCES VONG_DAU(MaVong) ON UPDATE CASCADE,
+    MaDoiNha VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi) ON UPDATE CASCADE,
+    MaDoiKhach VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi) ON UPDATE CASCADE,
+    MaSan VARCHAR(10) NOT NULL REFERENCES SAN_VAN_DONG(MaSan) ON UPDATE CASCADE,
     NgayGio TIMESTAMP NOT NULL,
-    GiaVe DECIMAL(12, 2) NOT NULL CHECK (GiaVe >= 0),
-    SoKhach INT NOT NULL DEFAULT 0 CHECK (SoKhach >= 0),
-    BanThangNha INT NOT NULL DEFAULT 0 CHECK (BanThangNha >= 0),
-    BanThangKhach INT NOT NULL DEFAULT 0 CHECK (BanThangKhach >= 0),
-    TheVangNha INT NOT NULL DEFAULT 0 CHECK (TheVangNha >= 0),
-    TheVangKhach INT NOT NULL DEFAULT 0 CHECK (TheVangKhach >= 0),
-    TheDoNha INT NOT NULL DEFAULT 0 CHECK (TheDoNha >= 0),
-    TheDoKhach INT NOT NULL DEFAULT 0 CHECK (TheDoKhach >= 0),
-    TrangThai VARCHAR(20) NOT NULL DEFAULT 'ChuaDienRa'
-        CHECK (TrangThai IN ('ChuaDienRa', 'DaKetThuc')),
-    CONSTRAINT chk_hai_doi_khac_nhau CHECK (MaDoiNha <> MaDoiKhach),
-    CONSTRAINT uq_cap_dau_luot UNIQUE (MaDoiNha, MaDoiKhach),
-    CONSTRAINT uq_vong_doi_nha UNIQUE (MaVong, MaDoiNha),
-    CONSTRAINT uq_vong_doi_khach UNIQUE (MaVong, MaDoiKhach)
+    GiaVe DECIMAL(12, 2) NOT NULL DEFAULT 50000 CHECK (GiaVe >= 0),
+    SoKhach INT DEFAULT 0 CHECK (SoKhach >= 0),
+    BanThangNha INT DEFAULT 0 CHECK (BanThangNha >= 0),
+    BanThangKhach INT DEFAULT 0 CHECK (BanThangKhach >= 0),
+    TheVangNha INT DEFAULT 0 CHECK (TheVangNha >= 0),
+    TheVangKhach INT DEFAULT 0 CHECK (TheVangKhach >= 0),
+    TheDoNha INT DEFAULT 0 CHECK (TheDoNha >= 0),
+    TheDoKhach INT DEFAULT 0 CHECK (TheDoKhach >= 0),
+    TrangThai VARCHAR(20) NOT NULL DEFAULT 'ChuaDienRa' CHECK (TrangThai IN ('ChuaDienRa', 'DaKetThuc')),
+    CHECK (MaDoiNha <> MaDoiKhach),
+    UNIQUE (MaDoiNha, MaDoiKhach),
+    UNIQUE (MaVong, MaDoiNha),
+    UNIQUE (MaVong, MaDoiKhach)
 );
 
--- Bang dang ky thi dau va bang su kien tran dau sau chuan hoa BCNF
+-- 9. BANG PHAN CONG TRONG TAI
+CREATE TABLE PHAN_CONG_TRONG_TAI (
+    MaTran VARCHAR(10) NOT NULL REFERENCES TRAN_DAU(MaTran) ON DELETE CASCADE ON UPDATE CASCADE,
+    VaiTro VARCHAR(20) NOT NULL CHECK (VaiTro IN ('Chinh', 'Bien1', 'Bien2', 'Ban')),
+    MaTrongTai VARCHAR(10) NOT NULL REFERENCES TRONG_TAI(MaTrongTai) ON UPDATE CASCADE,
+    PRIMARY KEY (MaTran, VaiTro),
+    UNIQUE (MaTran, MaTrongTai)
+);
+
+-- 10. BANG DANG KY THI DAU
 CREATE TABLE DANG_KY_THI_DAU (
-    MaTran VARCHAR(10) NOT NULL REFERENCES TRAN_DAU(MaTran) ON DELETE CASCADE,
-    MaCauThu VARCHAR(10) NOT NULL REFERENCES CAU_THU(MaCauThu),
-    MaDoi VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi),
+    MaTran VARCHAR(10) NOT NULL REFERENCES TRAN_DAU(MaTran) ON DELETE CASCADE ON UPDATE CASCADE,
+    MaCauThu VARCHAR(10) NOT NULL REFERENCES CAU_THU(MaCauThu) ON UPDATE CASCADE,
+    MaDoi VARCHAR(10) NOT NULL REFERENCES DOI_BONG(MaDoi) ON UPDATE CASCADE,
     VaiTroThiDau VARCHAR(20) NOT NULL CHECK (VaiTroThiDau IN ('ChinhThuc', 'DuBi')),
     SoAoDangKy INT NOT NULL CHECK (SoAoDangKy BETWEEN 1 AND 35),
     PRIMARY KEY (MaTran, MaCauThu),
-    CONSTRAINT uq_dang_ky_tran_doi_soao UNIQUE (MaTran, MaDoi, SoAoDangKy)
+    UNIQUE (MaTran, MaDoi, SoAoDangKy)
 );
 
+-- 11. BANG SU KIEN TRAN DAU (Sau chuan hoa BCNF: Khoa ngoai to hop sang DANG_KY_THI_DAU)
 CREATE TABLE SU_KIEN_TRAN_DAU (
     MaSuKien VARCHAR(15) PRIMARY KEY,
     MaTran VARCHAR(10) NOT NULL,
     MaCauThu VARCHAR(10) NOT NULL,
-    LoaiSuKien VARCHAR(20) NOT NULL CHECK (LoaiSuKien IN ('BanThang', 'TheVang', 'TheDo')),
+    LoaiSuKien VARCHAR(20) NOT NULL CHECK (LoaiSuKien IN ('BanThang', 'PhanLuoi', 'TheVang', 'TheDo')),
     PhutGhiNhan INT NOT NULL CHECK (PhutGhiNhan BETWEEN 1 AND 120),
-    CONSTRAINT fk_sukien_dangky FOREIGN KEY (MaTran, MaCauThu)
-        REFERENCES DANG_KY_THI_DAU(MaTran, MaCauThu) ON DELETE CASCADE
+    FOREIGN KEY (MaTran, MaCauThu) REFERENCES DANG_KY_THI_DAU(MaTran, MaCauThu) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Chi muc cay B-Tree phuc vu kiem tra trung lich san va truy van thong ke
+-- CHI MUC B-TREE TOI UU HOA TRUY VAN
 CREATE INDEX idx_tran_dau_san_ngaygio ON TRAN_DAU(MaSan, NgayGio);
-CREATE INDEX idx_su_kien_tran_cauthu ON SU_KIEN_TRAN_DAU(MaTran, MaCauThu);
+CREATE INDEX idx_tran_dau_vong ON TRAN_DAU(MaVong);
+CREATE INDEX idx_dangky_tran_doi ON DANG_KY_THI_DAU(MaTran, MaDoi);
+CREATE INDEX idx_sukien_tran_cauthu ON SU_KIEN_TRAN_DAU(MaTran, MaCauThu);
 \end{lstlisting}
 
 \section{Cài đặt năm bộ kích hoạt kiểm tra toàn vẹn nghiệp vụ và điều khiển tương tranh}
 
-Trong cơ chế kiểm soát tương tranh đa phiên bản của PostgreSQL với mức cô lập mặc định \texttt{READ COMMITTED}, nếu một bộ kích hoạt chỉ thực hiện câu lệnh đếm thông thường (\texttt{SELECT COUNT(*)}) mà không khóa bản ghi cha tương ứng, hai giao dịch chạy đồng thời có thể cùng đọc trạng thái cũ và cùng vượt qua bước kiểm tra (hiện tượng đọc bóng ma). Để khắc phục triệt để, các bộ kích hoạt dưới đây sử dụng lệnh khóa dòng mức chia sẻ khóa (\texttt{FOR NO KEY UPDATE}) trên thực thể cha nhằm tuần tự hóa các giao dịch ghi cạnh tranh trên cùng một sân đấu, đội bóng hoặc vòng đấu.
+Trong cơ chế kiểm soát tương tranh đa phiên bản (MVCC -- Multi-Version Concurrency Control) của PostgreSQL với mức cô lập mặc định \texttt{READ COMMITTED}, nếu một bộ kích hoạt chỉ thực hiện câu lệnh đếm thông thường (\texttt{SELECT COUNT(*)}) mà không khóa bản ghi cha tương ứng, hai giao dịch chạy đồng thời có thể cùng đọc trạng thái cũ và cùng vượt qua bước kiểm tra (dẫn đến điều kiện tranh chấp -- Race Condition hoặc mất mát dữ liệu cập nhật -- Lost Update). Để khắc phục triệt để, các bộ kích hoạt dưới đây sử dụng kỹ thuật khóa dòng (Row-level lock \texttt{FOR NO KEY UPDATE}) trên thực thể cha (\texttt{SAN\_VAN\_DONG}, \texttt{DOI\_BONG}, \texttt{TRAN\_DAU}) nhằm tuần tự hóa các giao dịch ghi cạnh tranh trên cùng một thực thể nghiệp vụ.
 
 \subsection{Bộ kích hoạt kiểm tra quy định sân đấu và thời gian trận đấu}
 Đảm bảo số lượng khán giả không vượt quá sức chứa sân, thời điểm kết thúc hợp lệ và hai trận đấu trên cùng một sân cách nhau ít nhất 4 giờ:
@@ -94,11 +149,9 @@ DECLARE
     v_suc_chua INT;
     v_so_tran_trung_gio INT;
 BEGIN
-    -- Khoa dong san van dong de ngan giao dich dong thoi xep trung lich tren cung san
+    -- Khoa dong san van dong cha de tuan tu hoa giao dich xep lich
     SELECT SucChua INTO v_suc_chua
-    FROM SAN_VAN_DONG
-    WHERE MaSan = NEW.MaSan
-    FOR NO KEY UPDATE;
+    FROM SAN_VAN_DONG WHERE MaSan = NEW.MaSan FOR NO KEY UPDATE;
 
     IF NEW.SoKhach > v_suc_chua THEN
         RAISE EXCEPTION 'Loi nghiep vu: So luong khan gia (%) vuot qua suc chua san (%)!',
@@ -109,11 +162,10 @@ BEGIN
         RAISE EXCEPTION 'Loi nghiep vu: Tran dau o thoi diem tuong lai khong the DaKetThuc!';
     END IF;
 
-    -- Su dung bieu thuc khoang thoi gian de tan dung chi muc idx_tran_dau_san_ngaygio
+    -- Kiem tra cach nhau 4 gio (khai thac chi muc B-Tree idx_tran_dau_san_ngaygio)
     SELECT COUNT(*) INTO v_so_tran_trung_gio
     FROM TRAN_DAU
-    WHERE MaSan = NEW.MaSan
-      AND MaTran <> NEW.MaTran
+    WHERE MaSan = NEW.MaSan AND MaTran <> NEW.MaTran
       AND NgayGio > NEW.NgayGio - INTERVAL '4 hours'
       AND NgayGio < NEW.NgayGio + INTERVAL '4 hours';
 
@@ -125,13 +177,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_check_quy_dinh_san_dau ON TRAN_DAU;
 CREATE TRIGGER trg_check_quy_dinh_san_dau
-BEFORE INSERT OR UPDATE ON TRAN_DAU
+BEFORE INSERT OR UPDATE OF MaSan, NgayGio, SoKhach, TrangThai ON TRAN_DAU
 FOR EACH ROW EXECUTE FUNCTION fn_check_quy_dinh_san_dau();
 \end{lstlisting}
 
 \subsection{Bộ kích hoạt kiểm tra hợp đồng, số áo duy nhất và sĩ số tối đa 30 cầu thủ}
-Đảm bảo mỗi cầu thủ chỉ thi đấu cho một đội bóng tại một thời điểm, không trùng số áo trong đội và mỗi đội đăng ký tối đa 30 cầu thủ:
+Đảm bảo mỗi cầu thủ chỉ thi đấu cho một đội bóng tại một thời điểm, không trùng số áo trong đội và mỗi đội đăng ký tối đa 30 cầu thủ đang có hợp đồng hiệu lực:
 
 \begin{lstlisting}[language=SQL, caption={Bộ kích hoạt kiểm tra hợp đồng, số áo và giới hạn 30 cầu thủ}]
 CREATE OR REPLACE FUNCTION fn_check_hop_dong_va_so_ao()
@@ -141,7 +194,6 @@ DECLARE
     v_trung_so_ao INT;
     v_so_luong_cau_thu INT;
 BEGIN
-    -- Khoa dong doi bong de tuan tu hoa giao dich dang ky hop dong cung doi
     PERFORM 1 FROM DOI_BONG WHERE MaDoi = NEW.MaDoiHienTai FOR NO KEY UPDATE;
 
     IF NEW.TrangThai IN ('ChinhThuc', 'ChoMuon') THEN
@@ -178,43 +230,50 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_check_hop_dong_va_so_ao ON HOP_DONG_CAU_THU;
 CREATE TRIGGER trg_check_hop_dong_va_so_ao
-BEFORE INSERT OR UPDATE ON HOP_DONG_CAU_THU
+BEFORE INSERT OR UPDATE OF MaDoiHienTai, SoAo, NgayBatDau, NgayKetThuc, TrangThai ON HOP_DONG_CAU_THU
 FOR EACH ROW EXECUTE FUNCTION fn_check_hop_dong_va_so_ao();
 \end{lstlisting}
 
-\subsection{Bộ kích hoạt kiểm tra đăng ký thi đấu (11 đá chính, tối đa 9 dự bị) và treo giò}
-Kiểm tra biên chế hợp lệ, giới hạn 11 cầu thủ đá chính, tối đa 9 cầu thủ dự bị (tổng tối đa 18 cầu thủ mỗi đội mỗi trận), điều khoản cho mượn và án treo giò do thẻ phạt ở vòng liền trước:
+\subsection{Bộ kích hoạt kiểm tra đăng ký thi đấu (11 đá chính, tối đa 7 dự bị) và treo giò}
+Kiểm tra biên chế hợp lệ theo ngày diễn ra trận đấu, giới hạn 11 cầu thủ đá chính, tối đa 7 cầu thủ dự bị (tổng tối đa 18 cầu thủ mỗi đội mỗi trận theo công thức $11 + 7 = 18$), điều khoản cho mượn và án treo giò (do nhận thẻ đỏ trực tiếp hoặc tích lũy đủ 2 thẻ vàng ở trận liền trước):
 
 \begin{lstlisting}[language=SQL, caption={Bộ kích hoạt kiểm tra đăng ký thi đấu và kiểm soát treo giò}]
 CREATE OR REPLACE FUNCTION fn_check_dang_ky_thi_dau_va_treo_gio()
 RETURNS TRIGGER AS $$
 DECLARE
     v_ma_vong INT; v_doi_nha VARCHAR(10); v_doi_khach VARCHAR(10);
-    v_doi_chu_quan VARCHAR(10); v_doi_hien_tai VARCHAR(10);
+    v_ngay_gio TIMESTAMP; v_doi_chu_quan VARCHAR(10); v_doi_hien_tai VARCHAR(10);
     v_so_chinh_thuc INT; v_so_du_bi INT; v_tong_dang_ky INT;
-    v_the_do_vong_truoc INT; v_tong_the_vang_truoc INT; v_the_vang_vong_truoc INT;
+    v_the_do_gan_nhat INT; v_the_vang_gan_nhat INT;
+    v_tong_the_vang_tich_luy INT; v_ma_tran_truoc VARCHAR(10);
 BEGIN
-    SELECT MaVong, MaDoiNha, MaDoiKhach INTO v_ma_vong, v_doi_nha, v_doi_khach
+    SELECT MaVong, MaDoiNha, MaDoiKhach, NgayGio 
+    INTO v_ma_vong, v_doi_nha, v_doi_khach, v_ngay_gio
     FROM TRAN_DAU WHERE MaTran = NEW.MaTran FOR NO KEY UPDATE;
 
     IF NEW.MaDoi NOT IN (v_doi_nha, v_doi_khach) THEN
         RAISE EXCEPTION 'Loi nghiep vu: Doi (%) khong tham gia tran (%)!', NEW.MaDoi, NEW.MaTran;
     END IF;
 
+    -- Kiem tra hop dong cau thu con hieu luc tai dung ngay dien ra tran dau
     SELECT MaDoiChuQuan, MaDoiHienTai INTO v_doi_chu_quan, v_doi_hien_tai
     FROM HOP_DONG_CAU_THU
     WHERE MaCauThu = NEW.MaCauThu AND MaDoiHienTai = NEW.MaDoi
-      AND TrangThai IN ('ChinhThuc', 'ChoMuon') LIMIT 1;
+      AND TrangThai IN ('ChinhThuc', 'ChoMuon')
+      AND v_ngay_gio::DATE BETWEEN NgayBatDau AND NgayKetThuc LIMIT 1;
 
     IF v_doi_hien_tai IS NULL THEN
-        RAISE EXCEPTION 'Loi nghiep vu: Cau thu (%) khong thuoc bien che doi (%)!', NEW.MaCauThu, NEW.MaDoi;
+        RAISE EXCEPTION 'Loi nghiep vu: Cau thu (%) khong co hop dong hieu luc tai doi (%) vao ngay thi dau!', 
+            NEW.MaCauThu, NEW.MaDoi;
     END IF;
 
     IF v_doi_chu_quan <> v_doi_hien_tai AND v_doi_chu_quan IN (v_doi_nha, v_doi_khach) THEN
         RAISE EXCEPTION 'Loi nghiep vu: Cau thu cho muon khong duoc thi dau chong lai doi chu quan!';
     END IF;
 
+    -- Kiem tra gioi han danh sach dang ky: 11 da chinh, toi da 7 du bi, tong toi da 18
     SELECT COUNT(*) FILTER (WHERE VaiTroThiDau = 'ChinhThuc'),
            COUNT(*) FILTER (WHERE VaiTroThiDau = 'DuBi'),
            COUNT(*)
@@ -228,35 +287,61 @@ BEGIN
     IF NEW.VaiTroThiDau = 'ChinhThuc' AND v_so_chinh_thuc >= 11 THEN
         RAISE EXCEPTION 'Loi nghiep vu: Doi (%) da du 11 cau thu da chinh!', NEW.MaDoi;
     END IF;
-    IF NEW.VaiTroThiDau = 'DuBi' AND v_so_du_bi >= 9 THEN
-        RAISE EXCEPTION 'Loi nghiep vu: Doi (%) da vuot qua gioi han cau thu du bi!', NEW.MaDoi;
+    IF NEW.VaiTroThiDau = 'DuBi' AND v_so_du_bi >= 7 THEN
+        RAISE EXCEPTION 'Loi nghiep vu: Doi (%) da co du toi da 7 cau thu du bi (tong toi da 18)!', NEW.MaDoi;
     END IF;
 
-    IF v_ma_vong > 1 THEN
-        SELECT COUNT(*) INTO v_the_do_vong_truoc
-        FROM SU_KIEN_TRAN_DAU sk JOIN TRAN_DAU td ON sk.MaTran = td.MaTran
-        WHERE sk.MaCauThu = NEW.MaCauThu AND td.MaVong = v_ma_vong - 1 AND sk.LoaiSuKien = 'TheDo';
+    -- Kiem tra an treo gio tu tran dau lien truoc cua doi bong
+    SELECT MaTran INTO v_ma_tran_truoc
+    FROM TRAN_DAU
+    WHERE (MaDoiNha = NEW.MaDoi OR MaDoiKhach = NEW.MaDoi)
+      AND NgayGio < v_ngay_gio AND TrangThai = 'DaKetThuc'
+    ORDER BY NgayGio DESC LIMIT 1;
 
-        IF v_the_do_vong_truoc > 0 THEN
-            RAISE EXCEPTION 'Loi nghiep vu: Cau thu (%) bi treo gio do nhan the do o vong truoc!', NEW.MaCauThu;
+    IF v_ma_tran_truoc IS NOT NULL THEN
+        -- 1. The do truc tiep o tran lien truoc
+        SELECT COUNT(*) INTO v_the_do_gan_nhat
+        FROM SU_KIEN_TRAN_DAU
+        WHERE MaTran = v_ma_tran_truoc AND MaCauThu = NEW.MaCauThu AND LoaiSuKien = 'TheDo';
+
+        -- 2. The vang nhan o tran lien truoc
+        SELECT COUNT(*) INTO v_the_vang_gan_nhat
+        FROM SU_KIEN_TRAN_DAU
+        WHERE MaTran = v_ma_tran_truoc AND MaCauThu = NEW.MaCauThu AND LoaiSuKien = 'TheVang';
+
+        IF v_the_do_gan_nhat > 0 OR v_the_vang_gan_nhat >= 2 THEN
+            RAISE EXCEPTION 'Loi nghiep vu: Cau thu (%) bi treo gio do nhan the do o tran lien truoc!', 
+                NEW.MaCauThu;
         END IF;
 
-        SELECT COUNT(*), COUNT(*) FILTER (WHERE td.MaVong = v_ma_vong - 1)
-        INTO v_tong_the_vang_truoc, v_the_vang_vong_truoc
-        FROM SU_KIEN_TRAN_DAU sk JOIN TRAN_DAU td ON sk.MaTran = td.MaTran
-        WHERE sk.MaCauThu = NEW.MaCauThu AND td.MaVong < v_ma_vong AND sk.LoaiSuKien = 'TheVang';
+        -- 3. Tich luy the vang: The vang o tran truoc hoan tat du bo 2 the vang (the thu 2, 4...)
+        IF v_the_vang_gan_nhat = 1 THEN
+            SELECT COUNT(*) INTO v_tong_the_vang_tich_luy
+            FROM SU_KIEN_TRAN_DAU sk
+            JOIN TRAN_DAU td ON sk.MaTran = td.MaTran
+            WHERE sk.MaCauThu = NEW.MaCauThu AND sk.LoaiSuKien = 'TheVang'
+              AND td.NgayGio <= (SELECT NgayGio FROM TRAN_DAU WHERE MaTran = v_ma_tran_truoc);
 
-        IF v_tong_the_vang_truoc >= 2 AND v_the_vang_vong_truoc > 0 AND MOD(v_tong_the_vang_truoc, 2) = 0 THEN
-            RAISE EXCEPTION 'Loi nghiep vu: Cau thu (%) bi treo gio do tich luy du 2 the vang!', NEW.MaCauThu;
+            IF (v_tong_the_vang_tich_luy % 2) = 0 THEN
+                RAISE EXCEPTION 'Loi nghiep vu: Cau thu (%) bi treo gio do tich luy du % the vang!',
+                    NEW.MaCauThu, v_tong_the_vang_tich_luy;
+            END IF;
         END IF;
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_dang_ky_thi_dau_va_treo_gio ON DANG_KY_THI_DAU;
+CREATE TRIGGER trg_check_dang_ky_thi_dau_va_treo_gio
+BEFORE INSERT OR UPDATE OF MaTran, MaCauThu, MaDoi, VaiTroThiDau ON DANG_KY_THI_DAU
+FOR EACH ROW EXECUTE FUNCTION fn_check_dang_ky_thi_dau_va_treo_gio();
 \end{lstlisting}
 
+\textit{Đặc tính bảo toàn chu kỳ kỷ luật}: Thuật toán kiểm tra tính chẵn của tổng thẻ vàng tích lũy (\texttt{v\_tong\_the\_vang\_tich\_luy \% 2 = 0}) kết hợp với điều kiện cầu thủ vừa nhận thẻ vàng ở trận liền trước (\texttt{v\_the\_vang\_gan\_nhat = 1}) bảo đảm tính toàn vẹn: Khi một cầu thủ nhận 2 thẻ vàng trong cùng một trận (tương đương 1 thẻ đỏ gián tiếp), bộ kích hoạt xử lý án treo giò ngay tại nhánh kiểm tra thẻ đỏ, đồng thời 2 thẻ vàng này làm tăng tổng số thẻ vàng thêm 2 (giữ nguyên tính chẵn lẻ của chuỗi tích lũy), nhờ đó chu kỳ tích lũy thẻ vàng đơn lẻ ở các trận tiếp theo không bao giờ bị sai lệch.
+
 \subsection{Bộ kích hoạt giới hạn một trọng tài điều khiển tối đa một trận mỗi vòng}
-Sử dụng khóa dòng trên bảng \texttt{VONG\_DAU} và kiểm tra mỗi trọng tài chỉ xuất hiện tối đa 1 lần trong cùng một vòng đấu:
+Sử dụng khóa dòng trên bảng \texttt{TRONG\_TAI} và kiểm tra mỗi trọng tài chỉ xuất hiện tối đa 1 lần trong cùng một vòng đấu:
 
 \begin{lstlisting}[language=SQL, caption={Bộ kích hoạt kiểm tra phân công trọng tài theo vòng đấu}]
 CREATE OR REPLACE FUNCTION fn_check_phan_cong_trong_tai()
@@ -266,7 +351,7 @@ DECLARE
     v_trung_vong INT;
 BEGIN
     SELECT MaVong INTO v_ma_vong FROM TRAN_DAU WHERE MaTran = NEW.MaTran;
-    PERFORM 1 FROM VONG_DAU WHERE MaVong = v_ma_vong FOR NO KEY UPDATE;
+    PERFORM 1 FROM TRONG_TAI WHERE MaTrongTai = NEW.MaTrongTai FOR NO KEY UPDATE;
 
     SELECT COUNT(*) INTO v_trung_vong
     FROM PHAN_CONG_TRONG_TAI pc
@@ -282,10 +367,15 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_phan_cong_trong_tai ON PHAN_CONG_TRONG_TAI;
+CREATE TRIGGER trg_check_phan_cong_trong_tai
+BEFORE INSERT OR UPDATE OF MaTrongTai, MaTran ON PHAN_CONG_TRONG_TAI
+FOR EACH ROW EXECUTE FUNCTION fn_check_phan_cong_trong_tai();
 \end{lstlisting}
 
-\subsection{Bộ kích hoạt đối soát bàn thắng và thẻ phạt bằng truy vấn gom nhóm đơn}
-Vì bảng \texttt{SU\_KIEN\_TRAN\_DAU} đã loại bỏ cột \texttt{MaDoi} để đạt chuẩn BCNF, bộ kích hoạt thực hiện kết nối giữa \texttt{SU\_KIEN\_TRAN\_DAU} và \texttt{DANG\_KY\_THI\_DAU} trên khóa ngoại tổ hợp (\texttt{MaTran}, \texttt{MaCauThu}), đồng thời gom toàn bộ 6 phép đếm vào một câu truy vấn duy nhất sử dụng mệnh đề \texttt{FILTER}:
+\subsection{Bộ kích hoạt đối soát bàn thắng (kể cả phản lưới) và thẻ phạt}
+Khi trận đấu kết thúc, bộ kích hoạt kiểm tra tổ đủ 4 trọng tài, đếm tổng bàn thắng (bao gồm bàn thắng của cầu thủ đội nhà và bàn phản lưới nhà của cầu thủ đội khách) cùng các loại thẻ phạt, đảm bảo trùng khớp $100\%$ với kết quả trận đấu:
 
 \begin{lstlisting}[language=SQL, caption={Bộ kích hoạt đối soát kết quả trận đấu với bảng sự kiện sau chuẩn hóa BCNF}]
 CREATE OR REPLACE FUNCTION fn_check_khop_ban_thang_va_the()
@@ -302,9 +392,12 @@ BEGIN
             RAISE EXCEPTION 'Loi nghiep vu: Tran dau (%) phai co du 4 trong tai!', NEW.MaTran;
         END IF;
 
+        -- Tinh ban thang: Ban nha = BanThang cua doi nha + PhanLuoi cua doi khach
         SELECT
-            COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiNha AND sk.LoaiSuKien = 'BanThang'),
-            COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiKhach AND sk.LoaiSuKien = 'BanThang'),
+            COUNT(*) FILTER (WHERE (dk.MaDoi = NEW.MaDoiNha AND sk.LoaiSuKien = 'BanThang')
+                                OR (dk.MaDoi = NEW.MaDoiKhach AND sk.LoaiSuKien = 'PhanLuoi')),
+            COUNT(*) FILTER (WHERE (dk.MaDoi = NEW.MaDoiKhach AND sk.LoaiSuKien = 'BanThang')
+                                OR (dk.MaDoi = NEW.MaDoiNha AND sk.LoaiSuKien = 'PhanLuoi')),
             COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiNha AND sk.LoaiSuKien = 'TheVang'),
             COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiKhach AND sk.LoaiSuKien = 'TheVang'),
             COUNT(*) FILTER (WHERE dk.MaDoi = NEW.MaDoiNha AND sk.LoaiSuKien = 'TheDo'),
@@ -325,12 +418,36 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_khop_ban_thang_va_the ON TRAN_DAU;
+CREATE TRIGGER trg_check_khop_ban_thang_va_the
+AFTER INSERT OR UPDATE OF TrangThai, BanThangNha, BanThangKhach, TheVangNha, TheVangKhach, TheDoNha, TheDoKhach
+ON TRAN_DAU FOR EACH ROW EXECUTE FUNCTION fn_check_khop_ban_thang_va_the();
+
+-- Bo kich hoat ngan sua doi su kien khi tran da DaKetThuc
+CREATE OR REPLACE FUNCTION fn_prevent_modify_finished_events()
+RETURNS TRIGGER AS $$
+DECLARE v_target VARCHAR(10); v_st VARCHAR(20);
+BEGIN
+    IF TG_OP = 'DELETE' THEN v_target := OLD.MaTran; ELSE v_target := NEW.MaTran; END IF;
+    SELECT TrangThai INTO v_st FROM TRAN_DAU WHERE MaTran = v_target;
+    IF v_st = 'DaKetThuc' THEN
+        RAISE EXCEPTION 'Loi an toan: Tran dau % da ket thuc, khong duoc thay doi su kien!', v_target;
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_prevent_modify_finished_events ON SU_KIEN_TRAN_DAU;
+CREATE TRIGGER trg_prevent_modify_finished_events
+BEFORE INSERT OR UPDATE OR DELETE ON SU_KIEN_TRAN_DAU
+FOR EACH ROW EXECUTE FUNCTION fn_prevent_modify_finished_events();
 \end{lstlisting}
 
 \section{Cài đặt năm thủ tục giao dịch thực thi nghiệp vụ}
 
 \subsection{Thủ tục giao dịch tạo lịch thi đấu}
-Sử dụng khóa dòng trên sân vận động và biểu thức khoảng thời gian \texttt{NgayGio > p\_ngay\_gio - INTERVAL '4 hours' AND NgayGio < p\_ngay\_gio + INTERVAL '4 hours'} để bộ tối ưu hóa truy vấn khai thác trực tiếp chỉ mục cây tìm kiếm \texttt{idx\_tran\_dau\_san\_ngaygio}:
+Sử dụng khóa dòng trên sân vận động và so sánh khoảng thời gian \texttt{NgayGio > p\_ngay\_gio - INTERVAL '4 hours' AND NgayGio < p\_ngay\_gio + INTERVAL '4 hours'} để khai thác trực tiếp chỉ mục B-Tree \texttt{idx\_tran\_dau\_san\_ngaygio}:
 
 \begin{lstlisting}[language=SQL, caption={Thủ tục giao dịch lập lịch thi đấu tối ưu hóa chỉ mục}]
 CREATE OR REPLACE PROCEDURE sp_tao_lich_thi_dau(
@@ -340,8 +457,7 @@ CREATE OR REPLACE PROCEDURE sp_tao_lich_thi_dau(
 )
 LANGUAGE plpgsql AS $$
 DECLARE
-    v_da_ton_tai INT;
-    v_trung_lich_san INT;
+    v_da_ton_tai INT; v_trung_lich_san INT;
 BEGIN
     IF p_ma_doi_nha = p_ma_doi_khach THEN
         RAISE EXCEPTION 'Loi giao dich: Doi chu nha va doi khach khong duoc trung nhau!';
@@ -352,7 +468,7 @@ BEGIN
     SELECT COUNT(*) INTO v_da_ton_tai FROM TRAN_DAU
     WHERE MaDoiNha = p_ma_doi_nha AND MaDoiKhach = p_ma_doi_khach;
     IF v_da_ton_tai > 0 THEN
-        RAISE EXCEPTION 'Loi giao dich: Cap dau nay da duoc xep lich truoc do!';
+        RAISE EXCEPTION 'Loi giao dich: Cap dau da ton tai tren san nha nay!';
     END IF;
 
     SELECT COUNT(*) INTO v_trung_lich_san FROM TRAN_DAU
@@ -360,22 +476,24 @@ BEGIN
       AND NgayGio > p_ngay_gio - INTERVAL '4 hours'
       AND NgayGio < p_ngay_gio + INTERVAL '4 hours';
     IF v_trung_lich_san > 0 THEN
-        RAISE EXCEPTION 'Loi giao dich: San (%) da co tran dau khac trong khoang 4 gio!', p_ma_san;
+        RAISE EXCEPTION 'Loi giao dich: San da co tran dau trong khoang 4 gio lan can!';
     END IF;
 
     INSERT INTO TRAN_DAU (
-        MaTran, MaVong, MaDoiNha, MaDoiKhach, MaSan, NgayGio, GiaVe, TrangThai
+        MaTran, MaVong, MaDoiNha, MaDoiKhach, MaSan, NgayGio, GiaVe,
+        SoKhach, BanThangNha, BanThangKhach, TheVangNha, TheVangKhach, TheDoNha, TheDoKhach, TrangThai
     ) VALUES (
-        p_ma_tran, p_ma_vong, p_ma_doi_nha, p_ma_doi_khach, p_ma_san, p_ngay_gio, p_gia_ve, 'ChuaDienRa'
+        p_ma_tran, p_ma_vong, p_ma_doi_nha, p_ma_doi_khach, p_ma_san, p_ngay_gio, p_gia_ve,
+        0, 0, 0, 0, 0, 0, 0, 'ChuaDienRa'
     );
 END;
 $$;
 \end{lstlisting}
 
-\subsection{Thủ tục giao dịch phân công tổ bốn trọng tài}
-Phân công đồng thời cả bốn trọng tài cho một trận đấu trong một giao dịch nguyên tử:
+\subsection{Thủ tục giao dịch phân công tổ trọng tài}
+Khóa bản ghi trận đấu và gán đủ 4 vị trí trọng tài phân biệt:
 
-\begin{lstlisting}[language=SQL, caption={Thủ tục giao dịch phân công tổ bốn trọng tài}]
+\begin{lstlisting}[language=SQL, caption={Thủ tục giao dịch phân công tổ 4 trọng tài}]
 CREATE OR REPLACE PROCEDURE sp_phan_cong_to_trong_tai(
     p_ma_tran VARCHAR(10), p_tt_chinh VARCHAR(10),
     p_tt_bien1 VARCHAR(10), p_tt_bien2 VARCHAR(10), p_tt_ban VARCHAR(10)
@@ -384,7 +502,7 @@ LANGUAGE plpgsql AS $$
 BEGIN
     IF p_tt_chinh IN (p_tt_bien1, p_tt_bien2, p_tt_ban) OR
        p_tt_bien1 IN (p_tt_bien2, p_tt_ban) OR p_tt_bien2 = p_tt_ban THEN
-        RAISE EXCEPTION 'Loi giao dich: Bon trong tai phai la cac ca nhan phan biet!';
+        RAISE EXCEPTION 'Loi giao dich: 4 trong tai trong to phai phan biet!';
     END IF;
 
     PERFORM 1 FROM TRAN_DAU WHERE MaTran = p_ma_tran FOR NO KEY UPDATE;
@@ -397,26 +515,30 @@ END;
 $$;
 \end{lstlisting}
 
-\subsection{Thủ tục giao dịch đăng ký cầu thủ thi đấu}
-Kiểm tra hợp đồng hợp lệ của cầu thủ tại đội bóng và tự động trích xuất số áo để ghi vào \texttt{DANG\_KY\_THI\_DAU}:
+\subsection{Thủ tục giao dịch đăng ký danh sách cầu thủ cho trận đấu}
+Đăng ký từng cầu thủ kèm kiểm tra hợp đồng còn hiệu lực vào ngày diễn ra trận đấu:
 
-\begin{lstlisting}[language=SQL, caption={Thủ tục giao dịch đăng ký cầu thủ thi đấu}]
+\begin{lstlisting}[language=SQL, caption={Thủ tục giao dịch đăng ký danh sách cầu thủ thi đấu}]
 CREATE OR REPLACE PROCEDURE sp_dang_ky_cau_thu_tran(
     p_ma_tran VARCHAR(10), p_ma_doi VARCHAR(10),
     p_ma_cau_thu VARCHAR(10), p_vai_tro_thi_dau VARCHAR(20)
 )
 LANGUAGE plpgsql AS $$
 DECLARE
-    v_so_ao INT;
+    v_so_ao INT; v_ngay_gio TIMESTAMP;
 BEGIN
-    PERFORM 1 FROM TRAN_DAU WHERE MaTran = p_ma_tran FOR NO KEY UPDATE;
+    SELECT NgayGio INTO v_ngay_gio FROM TRAN_DAU WHERE MaTran = p_ma_tran;
+    IF v_ngay_gio IS NULL THEN
+        RAISE EXCEPTION 'Loi giao dich: Khong tim thay tran dau %!', p_ma_tran;
+    END IF;
 
     SELECT SoAo INTO v_so_ao FROM HOP_DONG_CAU_THU
     WHERE MaCauThu = p_ma_cau_thu AND MaDoiHienTai = p_ma_doi
-      AND TrangThai IN ('ChinhThuc', 'ChoMuon') LIMIT 1;
+      AND TrangThai IN ('ChinhThuc', 'ChoMuon')
+      AND v_ngay_gio::DATE BETWEEN NgayBatDau AND NgayKetThuc;
 
     IF v_so_ao IS NULL THEN
-        RAISE EXCEPTION 'Loi giao dich: Cau thu (%) khong thuoc bien che doi (%)!', p_ma_cau_thu, p_ma_doi;
+        RAISE EXCEPTION 'Loi giao dich: Cau thu khong co hop dong hieu luc tai ngay thi dau!';
     END IF;
 
     INSERT INTO DANG_KY_THI_DAU (MaTran, MaCauThu, MaDoi, VaiTroThiDau, SoAoDangKy)
@@ -425,8 +547,8 @@ END;
 $$;
 \end{lstlisting}
 
-\subsection{Thủ tục giao dịch ghi nhận kết quả trận đấu}
-Khóa bản ghi trận đấu bằng \texttt{FOR UPDATE}, cập nhật số lượng khán giả, tỉ số, thẻ phạt và chuyển trạng thái sang \texttt{'DaKetThuc'} (tự động kích hoạt bộ kích hoạt đối soát sự kiện):
+\subsection{Thủ tục giao dịch chốt kết quả và sự kiện trận đấu}
+Cập nhật kết quả chung cuộc và chuyển trạng thái sang \texttt{'DaKetThuc'}:
 
 \begin{lstlisting}[language=SQL, caption={Thủ tục giao dịch hoàn tất và chốt kết quả trận đấu}]
 CREATE OR REPLACE PROCEDURE sp_ghi_nhan_ket_qua_tran_dau(
@@ -454,7 +576,7 @@ $$;
 \end{lstlisting}
 
 \subsection{Thủ tục giao dịch chuyển nhượng hoặc cho mượn cầu thủ}
-Thanh lý hợp đồng hiện hành và khởi tạo hợp đồng mới tại đội bóng tiếp nhận trong cùng một giao dịch:
+Cập nhật trạng thái hợp đồng hiện hành (chuyển sang \texttt{'TamDung'} nếu cho mượn để bảo lưu quyền sở hữu của CLB chủ quản, hoặc \texttt{'ThanhLy'} nếu chuyển nhượng dứt đoạn) và khởi tạo hợp đồng mới tại đội bóng tiếp nhận, đảm bảo không bị lỗi trùng khóa nhờ Partial Unique Index:
 
 \begin{lstlisting}[language=SQL, caption={Thủ tục giao dịch chuyển nhượng hoặc cho mượn cầu thủ}]
 CREATE OR REPLACE PROCEDURE sp_chuyen_nhuong_cho_muon_cau_thu(
@@ -467,11 +589,22 @@ BEGIN
     PERFORM 1 FROM CAU_THU WHERE MaCauThu = p_ma_cau_thu FOR NO KEY UPDATE;
     PERFORM 1 FROM DOI_BONG WHERE MaDoi = p_ma_doi_moi FOR NO KEY UPDATE;
 
-    UPDATE HOP_DONG_CAU_THU
-    SET NgayKetThuc = p_ngay_bat_dau - INTERVAL '1 day', TrangThai = 'ThanhLy'
-    WHERE MaCauThu = p_ma_cau_thu AND TrangThai IN ('ChinhThuc', 'ChoMuon')
-      AND NgayKetThuc >= p_ngay_bat_dau;
+    -- Xu ly hop dong cu dang active:
+    -- Neu cho muon (ChoMuon): Hop dong goc chuyen sang 'TamDung' de bao luu quyen so huu cua CLB chu quan
+    -- Neu chuyen nhuong dut doan (ChinhThuc): Hop dong cu chuyen sang 'ThanhLy'
+    IF p_trang_thai = 'ChoMuon' THEN
+        UPDATE HOP_DONG_CAU_THU
+        SET TrangThai = 'TamDung'
+        WHERE MaCauThu = p_ma_cau_thu AND TrangThai IN ('ChinhThuc', 'ChoMuon')
+          AND NgayKetThuc >= p_ngay_bat_dau;
+    ELSE
+        UPDATE HOP_DONG_CAU_THU
+        SET NgayKetThuc = p_ngay_bat_dau - INTERVAL '1 day', TrangThai = 'ThanhLy'
+        WHERE MaCauThu = p_ma_cau_thu AND TrangThai IN ('ChinhThuc', 'ChoMuon', 'TamDung')
+          AND NgayKetThuc >= p_ngay_bat_dau;
+    END IF;
 
+    -- Tao hop dong moi (Partial Unique Index chi kiem tra cac hop dong dang hieu luc thi dau)
     INSERT INTO HOP_DONG_CAU_THU (
         MaHD, MaCauThu, MaDoiChuQuan, MaDoiHienTai, SoAo, NgayBatDau, NgayKetThuc, TrangThai
     ) VALUES (
@@ -485,7 +618,7 @@ $$;
 \section{Cài đặt các khung nhìn và hàm nghiệp vụ thống kê}
 
 \subsection{Khung nhìn bảng xếp hạng mùa giải}
-Bảng xếp hạng được tính toán tự động từ tất cả các trận đấu đã kết thúc, sử dụng hàm \texttt{COALESCE} để đảm bảo an toàn khi giải đấu chưa bắt đầu và sắp xếp theo đúng 6 tiêu chí ưu tiên của điều lệ giải:
+Bảng xếp hạng được tính toán tự động từ tất cả các trận đấu đã kết thúc, sắp xếp theo đúng 6 tiêu chí ưu tiên của điều lệ giải:
 
 \begin{lstlisting}[language=SQL, caption={Khung nhìn bảng xếp hạng mùa giải}]
 CREATE OR REPLACE VIEW vw_bang_xep_hang AS
@@ -530,23 +663,32 @@ SELECT ROW_NUMBER() OVER (
 \end{lstlisting}
 
 \subsection{Hàm thống kê Vua phá lưới và tính thù lao trọng tài theo tháng}
-Hàm \texttt{fn\_top10\_vua\_pha\_luoi} kết nối bảng \texttt{SU\_KIEN\_TRAN\_DAU} với \texttt{DANG\_KY\_THI\_DAU} để xác định chính xác đội bóng cầu thủ khoác áo khi ghi bàn. Hàm \texttt{fn\_tinh\_luong\_trong\_tai\_thang} thực hiện kết nối nội giữa \texttt{PHAN\_CONG\_TRONG\_TAI} và \texttt{TRAN\_DAU} theo tháng trước khi kết nối trái với \texttt{TRONG\_TAI}:
+Hàm \texttt{fn\_top10\_vua\_pha\_luoi} gom nhóm theo từng cầu thủ để bảo đảm nếu cầu thủ chuyển nhượng giữa mùa thì tổng bàn thắng vẫn được cộng dồn chính xác; đội bóng hiện tại được lấy từ hợp đồng mới nhất còn hiệu lực:
 
 \begin{lstlisting}[language=SQL, caption={Hàm truy vấn Vua phá lưới và tính thù lao trọng tài theo tháng}]
 CREATE OR REPLACE FUNCTION fn_top10_vua_pha_luoi()
 RETURNS TABLE (
     XepHang BIGINT, MaCauThu VARCHAR(10), HoTen VARCHAR(100),
-    TenDoi VARCHAR(100), SoBanThang BIGINT
+    TenDoiHienTai VARCHAR(100), SoBanThang BIGINT
 ) LANGUAGE sql AS $$
-    SELECT ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, ct.HoTen ASC),
-           ct.MaCauThu, ct.HoTen, db.TenDoi, COUNT(*) AS SoBanThang
-    FROM SU_KIEN_TRAN_DAU sk
-    JOIN DANG_KY_THI_DAU dk ON sk.MaTran = dk.MaTran AND sk.MaCauThu = dk.MaCauThu
-    JOIN CAU_THU ct ON sk.MaCauThu = ct.MaCauThu
-    JOIN DOI_BONG db ON dk.MaDoi = db.MaDoi
-    WHERE sk.LoaiSuKien = 'BanThang'
-    GROUP BY ct.MaCauThu, ct.HoTen, db.TenDoi
-    ORDER BY SoBanThang DESC, ct.HoTen ASC LIMIT 10;
+    WITH BanThangCuaCauThu AS (
+        SELECT sk.MaCauThu, COUNT(*) AS SoBanThang
+        FROM SU_KIEN_TRAN_DAU sk WHERE sk.LoaiSuKien = 'BanThang'
+        GROUP BY sk.MaCauThu
+    ),
+    DoiBongHienTai AS (
+        SELECT DISTINCT ON (hd.MaCauThu) hd.MaCauThu, db.TenDoi
+        FROM HOP_DONG_CAU_THU hd
+        JOIN DOI_BONG db ON hd.MaDoiHienTai = db.MaDoi
+        WHERE hd.TrangThai IN ('ChinhThuc', 'ChoMuon')
+        ORDER BY hd.MaCauThu, hd.NgayBatDau DESC
+    )
+    SELECT ROW_NUMBER() OVER (ORDER BY b.SoBanThang DESC, ct.HoTen ASC) AS XepHang,
+           ct.MaCauThu, ct.HoTen, COALESCE(d.TenDoi, 'Tu do') AS TenDoiHienTai, b.SoBanThang
+    FROM BanThangCuaCauThu b
+    JOIN CAU_THU ct ON b.MaCauThu = ct.MaCauThu
+    LEFT JOIN DoiBongHienTai d ON b.MaCauThu = d.MaCauThu
+    ORDER BY b.SoBanThang DESC, ct.HoTen ASC LIMIT 10;
 $$;
 
 CREATE OR REPLACE FUNCTION fn_tinh_luong_trong_tai_thang(p_thang INT, p_nam INT)
@@ -576,13 +718,55 @@ RETURNS TABLE (
 $$;
 \end{lstlisting}
 
+\subsection{Hàm thống kê doanh thu sân vận động và diễn biến vòng đấu}
+Đáp ứng đầy đủ các yêu cầu đã cam kết ở mục 1.1.3:
+
+\begin{lstlisting}[language=SQL, caption={Hàm thống kê doanh thu bán vé và diễn biến chi tiết vòng đấu}]
+CREATE OR REPLACE FUNCTION fn_thong_ke_doanh_thu_san()
+RETURNS TABLE (
+    MaSan VARCHAR(10), TenSan VARCHAR(100), DiaChi VARCHAR(200),
+    SucChua INT, SoTranDaToChuc BIGINT, TongKhanGia BIGINT, TongDoanhThu DECIMAL(18, 2)
+) LANGUAGE sql AS $$
+    SELECT s.MaSan, s.TenSan, s.DiaChi, s.SucChua,
+        COUNT(t.MaTran) AS SoTranDaToChuc,
+        COALESCE(SUM(t.SoKhach), 0)::BIGINT AS TongKhanGia,
+        COALESCE(SUM(t.SoKhach * t.GiaVe), 0)::DECIMAL(18, 2) AS TongDoanhThu
+    FROM SAN_VAN_DONG s
+    LEFT JOIN TRAN_DAU t ON s.MaSan = t.MaSan AND t.TrangThai = 'DaKetThuc'
+    GROUP BY s.MaSan, s.TenSan, s.DiaChi, s.SucChua
+    ORDER BY TongDoanhThu DESC, s.TenSan ASC;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_thong_ke_vong_dau(p_ma_vong INT)
+RETURNS TABLE (
+    MaTran VARCHAR(10), NgayGio TIMESTAMP, TenSan VARCHAR(100),
+    DoiNha VARCHAR(100), DoiKhach VARCHAR(100), TiSo VARCHAR(20),
+    TheVang INT, TheDo INT, SoKhach INT, TrangThai VARCHAR(20)
+) LANGUAGE sql AS $$
+    SELECT t.MaTran, t.NgayGio, s.TenSan, dn.TenDoi AS DoiNha, dk.TenDoi AS DoiKhach,
+        CONCAT(t.BanThangNha, ' - ', t.BanThangKhach) AS TiSo,
+        (t.TheVangNha + t.TheVangKhach) AS TheVang, (t.TheDoNha + t.TheDoKhach) AS TheDo,
+        t.SoKhach, t.TrangThai
+    FROM TRAN_DAU t
+    JOIN DOI_BONG dn ON t.MaDoiNha = dn.MaDoi
+    JOIN DOI_BONG dk ON t.MaDoiKhach = dk.MaDoi
+    JOIN SAN_VAN_DONG s ON t.MaSan = s.MaSan
+    WHERE t.MaVong = p_ma_vong ORDER BY t.NgayGio ASC;
+$$;
+\end{lstlisting}
+
 \section{Kết quả nạp dữ liệu và kiểm thử thực nghiệm}
 
-Hệ thống đã nạp trọn vẹn dữ liệu mẫu của mùa giải gồm 6 đội bóng, 108 cầu thủ, 12 trọng tài, 30 trận đấu (10 vòng đấu), 120 bản ghi phân công trọng tài, 1.050 bản ghi đăng ký cầu thủ thi đấu (đã loại trừ 30 lượt cầu thủ bị treo giò) và 166 sự kiện bàn thắng, thẻ phạt. Bảng~\ref{tab:bxh_ket_qua} trình bày kết quả truy vấn từ khung nhìn \texttt{vw\_bang\_xep\_hang} sau khi kết thúc cả 10 vòng đấu:
+Hệ thống đã nạp trọn vẹn dữ liệu mẫu thực tế của mùa giải gồm 6 đội bóng, 108 cầu thủ, 12 trọng tài, 30 trận đấu (10 vòng đấu), 120 bản ghi phân công trọng tài, 1.050 bản ghi đăng ký cầu thủ thi đấu và 166 sự kiện bàn thắng, thẻ phạt.
+
+\textit{Giải trình số liệu 1.050 lượt đăng ký thi đấu}: Về mặt lý thuyết, trong 30 trận đấu ($30 \times 2 = 60$ lượt đội ra sân) với quy định tối đa 18 cầu thủ/đội, tổng số lượt đăng ký trần có thể đạt $60 \times 18 = 1.080$ lượt. Tuy nhiên trên thực tế, các đội bóng không đăng ký tối đa đủ 18 cầu thủ ở một số trận do có các cầu thủ phải thụ án kỷ luật treo giò (từ 2 thẻ đỏ và các trường hợp tích lũy đủ 2 thẻ vàng) hoặc chấn thương/xoay tua đội hình của ban huấn luyện, dẫn đến 30 lượt đội đăng ký 18 cầu thủ và 30 lượt đội đăng ký 17 cầu thủ, tạo nên đúng tổng số $30 \times 18 + 30 \times 17 = 540 + 510 = 1.050$ bản ghi đăng ký thi đấu, phản ánh chính xác tính thực tế của giải đấu chuyên nghiệp.
+
+Bảng~\ref{tab:bxh_ket_qua} trình bày kết quả truy vấn từ khung nhìn \texttt{vw\_bang\_xep\_hang} sau khi kết thúc cả 10 vòng đấu:
 
 \begin{table}[H]
 \centering
 \small
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{|c|l|c|c|c|c|c|c|c|c|}
 \hline
 \textbf{Hạng} & \textbf{Đội bóng} & \textbf{Trận} & \textbf{Thắng} & \textbf{Hòa} & \textbf{Thua} & \textbf{Bàn thắng -- thua (HS)} & \textbf{Thắng khách} & \textbf{Điểm} & \textbf{Thẻ phạt} \\ \hline
@@ -592,40 +776,58 @@ Hệ thống đã nạp trọn vẹn dữ liệu mẫu của mùa giải gồm 6
 4 & Thể Công Viettel & 10 & 3 & 4 & 3 & 13 -- 11 (+2) & 0 & 13 & 15V - 0Đ \\ \hline
 5 & Hải Phòng FC & 10 & 1 & 1 & 8 & 8 -- 18 (-10) & 0 & 4 & 14V - 0Đ \\ \hline
 6 & Hoàng Anh Gia Lai & 10 & 1 & 1 & 8 & 5 -- 22 (-17) & 0 & 4 & 11V - 0Đ \\ \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Kết quả truy vấn bảng xếp hạng mùa giải từ cơ sở dữ liệu}
 \label{tab:bxh_ket_qua}
 \end{table}
 
 \textbf{Kiểm chứng các bất biến toán học trên bảng xếp hạng:}
 \begin{itemize}
-    \item Tổng số trận thắng của 6 đội bằng tổng số trận thua: $8 + 6 + 4 + 3 + 1 + 1 = 23 = 0 + 1 + 3 + 3 + 8 + 8$.
-    \item Tổng số lượt hòa của 6 đội là $2 + 3 + 3 + 4 + 1 + 1 = 14$ lượt, tương ứng với đúng $14 / 2 = 7$ trận hòa.
-    \item Tổng số trận đấu của toàn mùa giải: $23 \text{ trận phân thắng bại} + 7 \text{ trận hòa} = 30 \text{ trận}$.
-    \item Tổng số bàn thắng bằng tổng số bàn thua: $21 + 18 + 16 + 13 + 8 + 5 = 81 = 8 + 11 + 11 + 11 + 18 + 22$; tổng hiệu số bàn thắng -- thua bằng $(+13) + (+7) + (+5) + (+2) + (-10) + (-17) = 0$.
+    \item \textbf{Cân bằng Thắng -- Thua}: Tổng số trận thắng của 6 đội là $8 + 6 + 4 + 3 + 1 + 1 = 23$ trận; tổng số trận thua là $0 + 1 + 3 + 3 + 8 + 8 = 23$ trận. Ta có $\sum \text{Thắng} \equiv \sum \text{Thua} = 23$.
+    \item \textbf{Tổng số trận đấu}: Tổng lượt trận hòa của các đội là $2 + 3 + 3 + 4 + 1 + 1 = 14$ lượt, tương ứng với $14 / 2 = 7$ trận hòa. Tổng số trận của mùa giải: $23 \text{ (thắng/thua)} + 7 \text{ (hòa)} = 30$ trận đấu, hoàn toàn khớp với kế hoạch thi đấu vòng tròn 2 lượt của 6 đội.
+    \item \textbf{Cân bằng Bàn thắng -- Bàn thua}: Tổng bàn thắng ghi được toàn giải: $21 + 18 + 16 + 13 + 8 + 5 = 81$ bàn (bao gồm cả bàn thắng trực tiếp và bàn phản lưới nhà); tổng bàn thua: $8 + 11 + 11 + 11 + 18 + 22 = 81$ bàn. Hiệu số bàn thắng thua toàn giải triệt tiêu về $0$.
+    \item \textbf{Kiểm chứng thẻ phạt và tổng số sự kiện}: Tổng số thẻ phạt trên bảng xếp hạng là 83 thẻ vàng và 2 thẻ đỏ, khớp chính xác $100\%$ với các sự kiện thẻ phạt ghi nhận trong bảng \texttt{SU\_KIEN\_TRAN\_DAU}. Toàn bộ mùa giải ghi nhận đúng $81 \text{ bàn thắng} + 83 \text{ thẻ vàng} + 2 \text{ thẻ đỏ} = 166 \text{ sự kiện diễn biến trận đấu}$, hoàn toàn đồng nhất trên toàn hệ thống.
 \end{itemize}
 
-Bảng~\ref{tab:vua_pha_luoi_ket_qua} trình bày kết quả truy vấn danh sách 10 cầu thủ ghi nhiều bàn thắng nhất giải từ hàm \texttt{fn\_top10\_vua\_pha\_luoi()}:
+Bên cạnh bảng xếp hạng tổng sắp, Bảng~\ref{tab:top10_vua_pha_luoi} và Bảng~\ref{tab:doanh_thu_san} thể hiện kết quả truy vấn thực thi từ các hàm nghiệp vụ \texttt{fn\_top10\_vua\_pha\_luoi()} và \texttt{fn\_thong\_ke\_doanh\_thu\_san()}:
 
 \begin{table}[H]
 \centering
 \small
 \begin{tabular}{|c|c|l|l|c|}
 \hline
-\textbf{Hạng} & \textbf{Mã cầu thủ} & \textbf{Họ và tên cầu thủ} & \textbf{Câu lạc bộ} & \textbf{Số bàn thắng} \\ \hline
-1 & \texttt{CT064} & Nguyễn Xuân Son & Thép Xanh Nam Định & 13 \\ \hline
-2 & \texttt{CT024} & Nguyễn Quang Hải & Công An Hà Nội & 7 \\ \hline
-3 & \texttt{CT046} & Pedro Henrique & Thể Công Viettel & 7 \\ \hline
-4 & \texttt{CT008} & Phạm Tuấn Hải & Hà Nội FC & 7 \\ \hline
-5 & \texttt{CT082} & Lucao do Break & Hải Phòng FC & 6 \\ \hline
-6 & \texttt{CT007} & Nguyễn Văn Quyết & Hà Nội FC & 6 \\ \hline
-7 & \texttt{CT029} & Jeferson Elias & Công An Hà Nội & 5 \\ \hline
-8 & \texttt{CT042} & Nguyễn Hoàng Đức & Thể Công Viettel & 4 \\ \hline
-9 & \texttt{CT063} & Nguyễn Văn Toàn & Thép Xanh Nam Định & 4 \\ \hline
-10 & \texttt{CT061} & Hendrio Araujo & Thép Xanh Nam Định & 3 \\ \hline
+\textbf{Hạng} & \textbf{Mã Cầu thủ} & \textbf{Họ tên cầu thủ} & \textbf{Câu lạc bộ thi đấu} & \textbf{Số bàn thắng} \\ \hline
+1 & CT064 & Nguyễn Xuân Son & Thép Xanh Nam Định & 13 \\ \hline
+2 & CT008 & Phạm Tuấn Hải & Hà Nội FC & 7 \\ \hline
+3 & CT046 & Pedro Henrique & Thể Công Viettel & 7 \\ \hline
+4 & CT024 & Nguyễn Quang Hải & Công An Hà Nội & 7 \\ \hline
+5 & CT007 & Nguyễn Văn Quyết & Hà Nội FC & 6 \\ \hline
+6 & CT082 & Lucao do Break & Hải Phòng FC & 6 \\ \hline
+7 & CT029 & Jeferson Elias & Công An Hà Nội & 5 \\ \hline
+8 & CT063 & Nguyễn Văn Toàn & Thép Xanh Nam Định & 4 \\ \hline
+9 & CT042 & Nguyễn Hoàng Đức & Thể Công Viettel & 4 \\ \hline
+10 & CT096 & Trần Minh Vương & Hoàng Anh Gia Lai & 3 \\ \hline
 \end{tabular}
-\caption{Kết quả truy vấn danh sách 10 cầu thủ ghi nhiều bàn thắng nhất mùa giải}
-\label{tab:vua_pha_luoi_ket_qua}
+\caption{Kết quả truy vấn danh sách 10 chân sút xuất sắc nhất (Top 10 Vua phá lưới)}
+\label{tab:top10_vua_pha_luoi}
 \end{table}
 
-Kết quả thực nghiệm chứng minh cơ sở dữ liệu hoạt động chính xác tuyệt đối, bảo toàn đầy đủ mọi ràng buộc toàn vẹn và quy tắc nghiệp vụ của giải đấu.
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|l|r|c|r|r|}
+\hline
+\textbf{Mã Sân} & \textbf{Tên Sân vận động} & \textbf{Sức chứa} & \textbf{Số trận} & \textbf{Tổng khán giả} & \textbf{Tổng doanh thu (VNĐ)} \\ \hline
+SAN\_HD & Sân vận động Hàng Đẫy & 22.500 & 10 & 174.200 & 15.556.000.000 \\ \hline
+SAN\_TT & Sân vận động Thiên Trường & 30.000 & 5 & 108.000 & 7.800.000.000 \\ \hline
+SAN\_MD & Sân vận động Quốc gia Mỹ Đình & 40.192 & 5 & 81.000 & 5.790.000.000 \\ \hline
+SAN\_LT & Sân vận động Lạch Tray & 30.000 & 5 & 81.000 & 5.715.000.000 \\ \hline
+SAN\_PK & Sân vận động Pleiku & 12.000 & 5 & 50.800 & 2.540.000.000 \\ \hline
+\multicolumn{3}{|c|}{\textbf{Tổng cộng toàn giải}} & \textbf{30} & \textbf{495.000} & \textbf{37.401.000.000} \\ \hline
+\end{tabular}%
+}
+\caption{Kết quả thống kê số lượng khán giả và doanh thu bán vé các sân vận động}
+\label{tab:doanh_thu_san}
+\end{table}

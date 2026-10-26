@@ -62,7 +62,7 @@ Tất cả các bộ kích hoạt đều sử dụng cơ chế khóa dòng mức
 * **Thời điểm kích hoạt**: `BEFORE INSERT OR UPDATE ON HOP_DONG_CAU_THU`.
 * **Cơ chế**: Khóa dòng `DOI_BONG`, kiểm tra cầu thủ chỉ thi đấu cho 1 đội tại một thời điểm, số áo 1..35 không trùng trong đội và tổng số cầu thủ của đội không vượt quá 30.
 
-### Trigger 3: Kiểm tra đăng ký thi đấu (11 đá chính, tối đa 9 dự bị, tổng tối đa 18) và kiểm soát treo giò
+### Trigger 3: Kiểm tra đăng ký thi đấu (11 đá chính, tối đa 7 dự bị, tổng tối đa 18) và kiểm soát treo giò
 * **Thời điểm kích hoạt**: `BEFORE INSERT OR UPDATE ON DANG_KY_THI_DAU`.
 * **Cơ chế**: Khóa dòng `TRAN_DAU`, kiểm tra biên chế cầu thủ, điều khoản cầu thủ cho mượn không đá chống đội chủ quản, giới hạn 11 đá chính + tối đa 7 dự bị, và kiểm tra án treo giò do thẻ đỏ hoặc tích lũy đủ 2 thẻ vàng ở vòng liền trước.
 

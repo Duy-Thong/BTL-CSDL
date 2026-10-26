@@ -25,7 +25,8 @@ Ngay sau bước ánh xạ từ mô hình thực thể liên kết sơ bộ (tr�
     
     \item $\text{CAU\_THU}(\underline{\mathbf{MaCauThu}}, \text{HoTen}, \text{NgaySinh}, \text{ViTri}, \text{QuocTich})$
     
-    \item $\text{HOP\_DONG\_CAU\_THU}(\underline{\mathbf{MaHD}}, \textit{MaCauThu}, \textit{MaDoiChuQuan}, \textit{MaDoiHienTai}, \text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai})$\\
+    \item $\text{HOP\_DONG\_CAU\_THU}(\underline{\mathbf{MaHD}}, \textit{MaCauThu}, \textit{MaDoiChuQuan}, \textit{MaDoiHienTai},$ \\
+    $\text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai})$\\
     \textit{Khóa ngoại: $\text{MaCauThu} \rightarrow \text{CAU\_THU}(\text{MaCauThu})$}\\
     \textit{Khóa ngoại: $\text{MaDoiChuQuan} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}\\
     \textit{Khóa ngoại: $\text{MaDoiHienTai} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}
@@ -34,7 +35,9 @@ Ngay sau bước ánh xạ từ mô hình thực thể liên kết sơ bộ (tr�
     
     \item $\text{VONG\_DAU}(\underline{\mathbf{MaVong}}, \text{TenVong}, \text{ThuTu})$
     
-    \item $\text{TRAN\_DAU}(\underline{\mathbf{MaTran}}, \textit{MaVong}, \textit{MaDoiNha}, \textit{MaDoiKhach}, \textit{MaSan}, \text{NgayGio}, \text{GiaVe}, \text{SoKhach}, \text{BanThangNha}, \text{BanThangKhach}, \text{TheVangNha}, \text{TheVangKhach}, \text{TheDoNha}, \text{TheDoKhach}, \text{TrangThai})$\\
+    \item $\text{TRAN\_DAU}(\underline{\mathbf{MaTran}}, \textit{MaVong}, \textit{MaDoiNha}, \textit{MaDoiKhach}, \textit{MaSan}, \text{NgayGio}, \text{GiaVe},$ \\
+    $\text{SoKhach}, \text{BanThangNha}, \text{BanThangKhach}, \text{TheVangNha},$ \\
+    $\text{TheVangKhach}, \text{TheDoNha}, \text{TheDoKhach}, \text{TrangThai})$\\
     \textit{Khóa ngoại: $\text{MaVong} \rightarrow \text{VONG\_DAU}(\text{MaVong})$}\\
     \textit{Khóa ngoại: $\text{MaDoiNha} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}\\
     \textit{Khóa ngoại: $\text{MaDoiKhach} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}\\
@@ -49,8 +52,10 @@ Ngay sau bước ánh xạ từ mô hình thực thể liên kết sơ bộ (tr�
     \textit{Khóa ngoại: $\text{MaCauThu} \rightarrow \text{CAU\_THU}(\text{MaCauThu})$}\\
     \textit{Khóa ngoại: $\text{MaDoi} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}
     
-    \item $\text{SU\_KIEN\_TRAN\_DAU\_BAN\_DAU}(\underline{\mathbf{MaSuKien}}, \textit{MaTran}, \textit{MaCauThu}, \textit{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan})$\\
-    \textit{Khóa ngoại sơ bộ: $\text{MaTran} \rightarrow \text{TRAN\_DAU}(\text{MaTran})$, $\text{MaCauThu} \rightarrow \text{CAU\_THU}(\text{MaCauThu})$, $\text{MaDoi} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}
+    \item $\text{SU\_KIEN\_TRAN\_DAU\_BAN\_DAU}(\underline{\mathbf{MaSuKien}}, \textit{MaTran}, \textit{MaCauThu},$ \\
+    $\textit{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan})$\\
+    \textit{Khóa ngoại sơ bộ: $\text{MaTran} \rightarrow \text{TRAN\_DAU}(\text{MaTran})$, $\text{MaCauThu} \rightarrow \text{CAU\_THU}(\text{MaCauThu})$,} \\
+    \textit{$\text{MaDoi} \rightarrow \text{DOI\_BONG}(\text{MaDoi})$}
 \end{enumerate}
 
 \section{Xác định phụ thuộc hàm, tính bao đóng và kiểm tra chuẩn BCNF}
@@ -112,19 +117,24 @@ Dưới đây, ta xác định tập phụ thuộc hàm tối thiểu $F_i$, tí
 
 \subsection{Quan hệ HOP\_DONG\_CAU\_THU}
 \begin{itemize}
-    \item Tập thuộc tính: $U_5 = \{\text{MaHD}, \text{MaCauThu}, \text{MaDoiChuQuan}, \text{MaDoiHienTai}, \text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai}\}$.
-    \item Tập phụ thuộc hàm $F_5$ (trong phạm vi quản lý một mùa giải):
+    \item Tập thuộc tính:
+    \begin{align*}
+        U_5 = \{&\text{MaHD}, \text{MaCauThu}, \text{MaDoiChuQuan}, \text{MaDoiHienTai}, \\
+                &\text{SoAo}, \text{NgayBatDau}, \text{NgayKetThuc}, \text{TrangThai}\}.
+    \end{align*}
+    \item Bản chất nghiệp vụ và tập phụ thuộc hàm $F_5$:
+    Quan hệ \texttt{HOP\_DONG\_CAU\_THU} lưu trữ toàn bộ lịch sử hợp đồng của các cầu thủ qua các giai đoạn (bao gồm các hợp đồng đang có hiệu lực thi đấu \texttt{'ChinhThuc'}, \texttt{'ChoMuon'} và các hợp đồng đã \texttt{'ThanhLy'}). Do đó, các phụ thuộc hàm bao trùm toàn bộ quan hệ gồm:
     \begin{align*}
         f_{5.1}: & \quad \text{MaHD} \rightarrow U_5 \setminus \{\text{MaHD}\} \\
-        f_{5.2}: & \quad \{\text{MaCauThu}, \text{MaDoiHienTai}\} \rightarrow U_5 \setminus \{\text{MaCauThu}, \text{MaDoiHienTai}\} \\
-        f_{5.3}: & \quad \{\text{MaDoiHienTai}, \text{SoAo}\} \rightarrow U_5 \setminus \{\text{MaDoiHienTai}, \text{SoAo}\}
+        f_{5.2}: & \quad \{\text{MaCauThu}, \text{NgayBatDau}\} \rightarrow U_5 \setminus \{\text{MaCauThu}, \text{NgayBatDau}\}
     \end{align*}
-    (Trong đó $f_{5.2}$ phản ánh quy tắc mỗi cầu thủ chỉ ký một bản hợp đồng thi đấu tại một đội bóng hiện tại trong mùa giải; $f_{5.3}$ phản ánh quy tắc trong cùng một đội bóng hiện tại, mỗi số áo từ $1$ đến $35$ chỉ thuộc về duy nhất một cầu thủ).
+    (Trong đó $f_{5.1}$ xác định mỗi mã hợp đồng quản lý duy nhất một bản hợp đồng cụ thể; $f_{5.2}$ thể hiện một cầu thủ tại một ngày bắt đầu ký kết xác định chỉ tham gia một bản hợp đồng duy nhất).
+    
+    \textit{Lưu ý về ràng buộc toàn vẹn thời gian và cơ chế cho mượn}: Ràng buộc một cầu thủ chỉ khoác áo một đội tại một thời điểm ($\text{MaCauThu} \rightarrow \text{MaDoiHienTai}$) và mỗi số áo trong một đội không được trùng nhau ($\{\text{MaDoiHienTai}, \text{SoAo}\} \rightarrow \text{MaCauThu}$) là các ràng buộc theo trạng thái hiệu lực (Temporal Constraints), chỉ áp dụng trên tập con các hợp đồng còn hiệu lực thi đấu ($\text{TrangThai} \in \{\text{'ChinhThuc'}, \text{'ChoMuon'}\}$). Trong cài đặt PostgreSQL, các quy tắc này được hiện thực hóa chuẩn mực bằng \textbf{Chỉ mục duy nhất có điều kiện (Partial Unique Index)} thay vì áp đặt ràng buộc \texttt{UNIQUE} toàn thể (vốn sẽ làm mất tính lưu trữ lịch sử các hợp đồng đã thanh lý). Khi một cầu thủ được CLB chủ quản cho mượn sang CLB khác, hợp đồng gốc tại CLB chủ quản được chuyển sang trạng thái \texttt{'TamDung'} (tạm dừng thi đấu tại CLB chủ quản trong thời hạn cho mượn) để không xung đột với Partial Unique Index, trong khi bản ghi hợp đồng mới được tạo lập với \texttt{TrangThai = 'ChoMuon'}, \texttt{MaDoiChuQuan} giữ nguyên CLB gốc và \texttt{MaDoiHienTai} là CLB tiếp nhận. Khi hết hạn mượn, bản ghi mượn được chuyển sang \texttt{'ThanhLy'} và hợp đồng gốc được kích hoạt lại thành \texttt{'ChinhThuc'}. Nhờ vậy, quyền sở hữu của CLB chủ quản luôn được bảo toàn xuyên suốt lịch sử cơ sở dữ liệu.
     \item Tính bao đóng và xác định khóa ứng viên:
-    $$\{\text{MaHD}\}^+ = U_5, \quad \{\text{MaCauThu}, \text{MaDoiHienTai}\}^+ = U_5, \quad \{\text{MaDoiHienTai}, \text{SoAo}\}^+ = U_5.$$
-    Do đó quan hệ có 3 khóa ứng viên:
-    $$K_1 = \{\text{MaHD}\}, \quad K_2 = \{\text{MaCauThu}, \text{MaDoiHienTai}\}, \quad K_3 = \{\text{MaDoiHienTai}, \text{SoAo}\}.$$
-    \item Kiểm tra điều kiện BCNF: Vế trái của cả ba phụ thuộc hàm $f_{5.1}, f_{5.2}, f_{5.3}$ đều là các khóa ứng viên của $U_5$.
+    $$\{\text{MaHD}\}^+ = U_5, \quad \{\text{MaCauThu}, \text{NgayBatDau}\}^+ = U_5.$$
+    Quan hệ có 2 khóa ứng viên: $K_1 = \{\text{MaHD}\}$, $K_2 = \{\text{MaCauThu}, \text{NgayBatDau}\}$.
+    \item Kiểm tra điều kiện BCNF: Vế trái của cả $f_{5.1}$ và $f_{5.2}$ đều là các khóa ứng viên (siêu khóa) của $U_5$.
     \item \textbf{Kết luận}: Quan hệ \texttt{HOP\_DONG\_CAU\_THU} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
@@ -156,8 +166,9 @@ Dưới đây, ta xác định tập phụ thuộc hàm tối thiểu $F_i$, tí
 \begin{itemize}
     \item Tập thuộc tính đầy đủ gồm 15 thuộc tính:
     \begin{align*}
-        U_8 = \{&\text{MaTran}, \text{MaVong}, \text{MaDoiNha}, \text{MaDoiKhach}, \text{MaSan}, \text{NgayGio}, \text{GiaVe}, \text{SoKhach}, \\
-        &\text{BanThangNha}, \text{BanThangKhach}, \text{TheVangNha}, \text{TheVangKhach}, \text{TheDoNha}, \text{TheDoKhach}, \text{TrangThai}\}.
+        U_8 = \{&\text{MaTran}, \text{MaVong}, \text{MaDoiNha}, \text{MaDoiKhach}, \text{MaSan}, \\
+                &\text{NgayGio}, \text{GiaVe}, \text{SoKhach}, \text{BanThangNha}, \text{BanThangKhach}, \\
+                &\text{TheVangNha}, \text{TheVangKhach}, \text{TheDoNha}, \text{TheDoKhach}, \text{TrangThai}\}.
     \end{align*}
     \item Tập phụ thuộc hàm $F_8$ theo thể thức thi đấu vòng tròn 2 lượt:
     \begin{align*}
@@ -173,7 +184,10 @@ Dưới đây, ta xác định tập phụ thuộc hàm tối thiểu $F_i$, tí
         \item Thuộc tính $\text{MaSan}$ trong $\text{TRAN\_DAU}$ ghi nhận sân vận động thực tế tổ chức trận đấu (có thể là sân trung lập khi sân nhà bảo trì hoặc chịu án phạt kỷ luật của Ban Tổ chức), do đó không tồn tại phụ thuộc hàm $\text{MaDoiNha} \rightarrow \text{MaSan}$ trên lược đồ $\text{TRAN\_DAU}$.
     \end{itemize}
     \item Tính bao đóng và xác định khóa ứng viên:
-    $$\{\text{MaTran}\}^+ = \{\text{MaDoiNha}, \text{MaDoiKhach}\}^+ = \{\text{MaVong}, \text{MaDoiNha}\}^+ = \{\text{MaVong}, \text{MaDoiKhach}\}^+ = U_8.$$
+    \begin{align*}
+        \{\text{MaTran}\}^+ &= \{\text{MaDoiNha}, \text{MaDoiKhach}\}^+ \\
+                            &= \{\text{MaVong}, \text{MaDoiNha}\}^+ = \{\text{MaVong}, \text{MaDoiKhach}\}^+ = U_8.
+    \end{align*}
     Quan hệ có 4 khóa ứng viên: $K_1 = \{\text{MaTran}\}$, $K_2 = \{\text{MaDoiNha}, \text{MaDoiKhach}\}$, $K_3 = \{\text{MaVong}, \text{MaDoiNha}\}$, $K_4 = \{\text{MaVong}, \text{MaDoiKhach}\}$.
     \item Kiểm tra điều kiện BCNF: Mọi vế trái trong $F_8$ đều là khóa ứng viên của $U_8$.
     \item \textbf{Kết luận}: Quan hệ \texttt{TRAN\_DAU} đạt chuẩn \textbf{BCNF}.
@@ -205,15 +219,21 @@ Dưới đây, ta xác định tập phụ thuộc hàm tối thiểu $F_i$, tí
     \end{align*}
     (Trong đó $f_{10.1}$ thể hiện mỗi cầu thủ trong một trận chỉ đăng ký thi đấu cho một đội với một vai trò và một số áo; $f_{10.2}$ thể hiện trong một trận đấu, mỗi số áo đăng ký của một đội bóng xác định duy nhất cầu thủ mang áo đó).
     \item Tính bao đóng và xác định khóa ứng viên:
-    $$\{\text{MaTran}, \text{MaCauThu}\}^+ = U_{10} \implies K_1 = \{\text{MaTran}, \text{MaCauThu}\},$$
-    $$\{\text{MaTran}, \text{MaDoi}, \text{SoAoDangKy}\}^+ = U_{10} \implies K_2 = \{\text{MaTran}, \text{MaDoi}, \text{SoAoDangKy}\}.$$
+    \begin{align*}
+        \{\text{MaTran}, \text{MaCauThu}\}^+ = U_{10} &\implies K_1 = \{\text{MaTran}, \text{MaCauThu}\}, \\
+        \{\text{MaTran}, \text{MaDoi}, \text{SoAoDangKy}\}^+ = U_{10} &\implies K_2 = \{\text{MaTran}, \text{MaDoi}, \text{SoAoDangKy}\}.
+    \end{align*}
     \item Kiểm tra điều kiện BCNF: Vế trái của cả $f_{10.1}$ và $f_{10.2}$ đều là siêu khóa của $U_{10}$.
     \item \textbf{Kết luận}: Quan hệ \texttt{DANG\_KY\_THI\_DAU} đạt chuẩn \textbf{BCNF}.
 \end{itemize}
 
 \subsection{Quan hệ SU\_KIEN\_TRAN\_DAU\_BAN\_DAU (Phát hiện vi phạm chuẩn BCNF)}
 \begin{itemize}
-    \item Tập thuộc tính ban đầu: $U_{11} = \{\text{MaSuKien}, \text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}$.
+    \item Tập thuộc tính ban đầu:
+    \begin{align*}
+        U_{11} = \{&\text{MaSuKien}, \text{MaTran}, \text{MaCauThu}, \\
+                   &\text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}.
+    \end{align*}
     \item Tập phụ thuộc hàm $F_{11}$:
     \begin{align*}
         f_{11.1}: & \quad \text{MaSuKien} \rightarrow \{\text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\} \\
@@ -222,7 +242,7 @@ Dưới đây, ta xác định tập phụ thuộc hàm tối thiểu $F_i$, tí
     \item Tính bao đóng thuộc tính:
     \begin{itemize}
         \item Bao đóng của $\{\text{MaSuKien}\}$:
-        $$\{\text{MaSuKien}\}^+ = \{\text{MaSuKien}, \text{MaTran}, \text{MaCauThu}, \text{MaDoi}, \text{LoaiSuKien}, \text{PhutGhiNhan}\} = U_{11}.$$
+        $$\{\text{MaSuKien}\}^+ = U_{11}.$$
         Suy ra khóa ứng viên duy nhất của quan hệ là $K = \{\text{MaSuKien}\}$.
         \item Bao đóng của $\{\text{MaTran}, \text{MaCauThu}\}$:
         $$\{\text{MaTran}, \text{MaCauThu}\}^+ = \{\text{MaTran}, \text{MaCauThu}, \text{MaDoi}\} \neq U_{11}$$
@@ -253,10 +273,10 @@ Việc lưu trữ dư thừa thuộc tính $\text{MaDoi}$ trong bảng $\text{SU
         R_2 &= \{\underline{\mathbf{MaSuKien}}, \textit{MaTran}, \textit{MaCauThu}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}
     \end{align*}
     \item \textbf{Bước 3 (Hợp nhất lược đồ con dư thừa)}:
-    Nhận thấy lược đồ $R_1(\underline{\mathbf{MaTran}}, \underline{\mathbf{MaCauThu}}, \text{MaDoi})$ chính là phép chiếu trên tập thuộc tính con của lược đồ $\text{DANG\_KY\_THI\_DAU}(\underline{\mathbf{MaTran}}, \underline{\mathbf{MaCauThu}}, \text{MaDoi}, \text{VaiTroThiDau}, \text{SoAoDangKy})$ vốn đã tồn tại trong cơ sở dữ liệu với cùng khóa chính $(\text{MaTran}, \text{MaCauThu})$ và cùng phụ thuộc hàm $\{\text{MaTran}, \text{MaCauThu}\} \rightarrow \text{MaDoi}$.
+    Nhận thấy lược đồ $R_1(\underline{\mathbf{MaTran}}, \underline{\mathbf{MaCauThu}}, \text{MaDoi})$ chính là phép chiếu trên tập thuộc tính con của lược đồ $\text{DANG\_KY\_THI\_DAU}$ vốn đã tồn tại trong cơ sở dữ liệu với cùng khóa chính $(\text{MaTran}, \text{MaCauThu})$ và cùng phụ thuộc hàm $\{\text{MaTran}, \text{MaCauThu}\} \rightarrow \text{MaDoi}$.
     Do đó, ta không cần tạo thêm bảng vật lý cho $R_1$ mà tích hợp trực tiếp $R_1$ vào $\text{DANG\_KY\_THI\_DAU}$, đồng thời thiết lập khóa ngoại tổ hợp từ $R_2$ (chính là bảng $\text{SU\_KIEN\_TRAN\_DAU}$ sau chuẩn hóa) tham chiếu tới $\text{DANG\_KY\_THI\_DAU}$:
     $$\text{SU\_KIEN\_TRAN\_DAU}(\underline{\mathbf{MaSuKien}}, \textit{MaTran}, \textit{MaCauThu}, \text{LoaiSuKien}, \text{PhutGhiNhan})$$
-    $$\textit{Khóa ngoại tổ hợp: } (\text{MaTran}, \text{MaCauThu}) \rightarrow \text{DANG\_KY\_THI\_DAU}(\text{MaTran}, \text{MaCauThu}).$$
+    \textit{Khóa ngoại tổ hợp}: $(\text{MaTran}, \text{MaCauThu}) \rightarrow \text{DANG\_KY\_THI\_DAU}(\text{MaTran}, \text{MaCauThu})$.
 \end{itemize}
 
 \subsection{Chứng minh tính chất toán học của phép tách}
@@ -266,7 +286,7 @@ Việc lưu trữ dư thừa thuộc tính $\text{MaDoi}$ trong bảng $\text{SU
     Ta có:
     $$R_1 \cap R_2 = \{\text{MaTran}, \text{MaCauThu}\}, \quad R_1 \setminus R_2 = \{\text{MaDoi}\}.$$
     Vì $\{\text{MaTran}, \text{MaCauThu}\} \rightarrow \{\text{MaDoi}\} \in F_{11}$ (tức $R_1 \cap R_2$ là siêu khóa của $R_1$), nên phép tách bảo toàn kết nối không mất mát thông tin:
-    $$\text{SU\_KIEN\_TRAN\_DAU\_BAN\_DAU} = \pi_{U_{11}}(\text{SU\_KIEN\_TRAN\_DAU} \bowtie_{\text{MaTran}, \text{MaCauThu}} \text{DANG\_KY\_THI\_DAU}).$$
+    $$\text{SU\_KIEN\_TRAN\_DAU\_BAN\_DAU} = \pi_{U_{11}}(\text{SU\_KIEN\_TRAN\_DAU} \bowtie \text{DANG\_KY\_THI\_DAU}).$$
     \item \textbf{Chứng minh tính bảo toàn phụ thuộc hàm}:
     \begin{itemize}
         \item Phụ thuộc hàm $f_{11.1}: \text{MaSuKien} \rightarrow \{\text{MaTran}, \text{MaCauThu}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}$ được bảo toàn nguyên vẹn trên quan hệ $\text{SU\_KIEN\_TRAN\_DAU}$.
@@ -277,9 +297,9 @@ Việc lưu trữ dư thừa thuộc tính $\text{MaDoi}$ trong bảng $\text{SU
     Quan hệ $\text{SU\_KIEN\_TRAN\_DAU}$ mới có tập thuộc tính $U'_{11} = \{\text{MaSuKien}, \text{MaTran}, \text{MaCauThu}, \text{LoaiSuKien}, \text{PhutGhiNhan}\}$ và phụ thuộc hàm duy nhất $\text{MaSuKien} \rightarrow U'_{11} \setminus \{\text{MaSuKien}\}$ với vế trái $\text{MaSuKien}$ là khóa chính. Như vậy, toàn bộ 11 lược đồ quan hệ của hệ thống đều đạt chuẩn \textbf{BCNF} tuyệt đối.
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[angle=90, width=0.7\textheight, keepaspectratio]{Figures/RSD.png}
+	\includegraphics[width=0.92\textwidth, keepaspectratio]{Figures/RSD.png}
     \caption{Sơ đồ cấu trúc lược đồ quan hệ và mối liên kết khóa sau chuẩn hóa BCNF}
     \label{fig:relational_diagram}
 \end{figure}

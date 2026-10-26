@@ -36,7 +36,7 @@ Hệ thống tuân thủ chặt chẽ các quy định nghiệp vụ sau:
     \item \textbf{Quy định về đăng ký thi đấu và kết quả trận đấu}:
     \begin{itemize}
         \item Trận đấu có hai trạng thái: chưa diễn ra hoặc đã kết thúc. Ngày diễn ra trận đấu không được vượt quá thời gian hiện tại đối với các trận đã kết thúc.
-        \item Trong mỗi trận đấu, mỗi đội bóng chỉ được đăng ký tối đa 18 cầu thủ gồm cả cầu thủ đá chính và cầu thủ dự bị.
+        \item Trong mỗi trận đấu, mỗi đội bóng chỉ được đăng ký tối đa 18 cầu thủ gồm 11 cầu thủ đá chính và tối đa 7 cầu thủ dự bị ($11 + 7 = 18$).
         \item Thông tin về bàn thắng, thẻ vàng, thẻ đỏ mà từng cầu thủ ghi được hoặc mắc phải trong mỗi trận đấu đều được ghi nhận chi tiết theo từng phút.
         \item Tổng số bàn thắng và tổng số thẻ phạt của các cầu thủ trong đội phải khớp chính xác với tỉ số và số thẻ ghi nhận của trận đấu đó.
     \end{itemize}
@@ -47,7 +47,10 @@ Hệ thống cơ sở dữ liệu đáp ứng các chức năng nghiệp vụ sa
 \begin{itemize}
     \item \textbf{Quản lý dữ liệu danh mục}: Thêm, sửa, xóa, tra cứu thông tin đội bóng, cầu thủ, trọng tài, sân vận động, hợp đồng chuyển nhượng và cho mượn cầu thủ.
     \item \textbf{Bảng xếp hạng giải đấu}: Tự động tính điểm (thắng được 3 điểm, hòa được 1 điểm, thua được 0 điểm) và xếp hạng các đội lần lượt theo các tiêu chí:
-    $$\text{Điểm} \rightarrow \text{Hiệu số bàn thắng/thua} \rightarrow \text{Tổng số bàn thắng} \rightarrow \text{Số trận thắng sân khách} \rightarrow \text{Ít thẻ đỏ hơn} \rightarrow \text{Ít thẻ vàng hơn}.$$
+    \begin{align*}
+        \text{Điểm số} &\rightarrow \text{Hiệu số bàn thắng/thua} \rightarrow \text{Tổng số bàn thắng} \\
+        &\rightarrow \text{Số trận thắng sân khách} \rightarrow \text{Ít thẻ đỏ hơn} \rightarrow \text{Ít thẻ vàng hơn}.
+    \end{align*}
     \item \textbf{Thống kê vua phá lưới}: Hiển thị danh sách 10 cầu thủ ghi được nhiều bàn thắng nhất trong mùa giải.
     \item \textbf{Tính thù lao trọng tài theo tháng}: Tính tiền công điều khiển trận đấu cho các trọng tài theo quy định: trọng tài chính nhận $3.000.000$ đồng/trận; trọng tài biên nhận $2.000.000$ đồng/trận; trọng tài bàn nhận $1.000.000$ đồng/trận.
     \item \textbf{Thống kê doanh thu sân vận động}: Tính toán doanh thu bán vé từng sân đấu theo công thức: $\text{Doanh thu} = \sum (\text{Số khán giả} \times \text{Giá vé mỗi trận})$.
@@ -137,7 +140,7 @@ Lưu trữ hợp đồng, quản lý tình trạng thi đấu và việc cho mư
 \texttt{SoAo} & INT & Bắt buộc, Từ 1 đến 35 & Số áo thi đấu tại đội hiện tại (Duy nhất theo từng \texttt{MaDoiHienTai}) \\ \hline
 \texttt{NgayBatDau} & DATE & Bắt buộc & Ngày bắt đầu hợp đồng \\ \hline
 \texttt{NgayKetThuc} & DATE & Bắt buộc & Ngày kết thúc hợp đồng \\ \hline
-\texttt{TrangThai} & VARCHAR(20) & Bắt buộc & Tình trạng: \texttt{'ChinhThuc'}, \texttt{'ChoMuon'}, \texttt{'ThanhLy'} \\ \hline
+\texttt{TrangThai} & VARCHAR(20) & Bắt buộc & Tình trạng: \texttt{'ChinhThuc'}, \texttt{'ChoMuon'}, \texttt{'TamDung'}, \texttt{'ThanhLy'} \\ \hline
 \end{tabular}
 \caption{Từ điển dữ liệu bảng HOP\_DONG\_CAU\_THU}
 \end{table}
@@ -234,7 +237,7 @@ Lưu trữ danh sách tối đa 18 cầu thủ được đăng ký của mỗi �
 \end{table}
 
 \subsection{Bảng SU\_KIEN\_TRAN\_DAU (Sự kiện diễn biến trận)}
-Lưu trữ chi tiết các bàn thắng và thẻ phạt theo từng phút của trận đấu. Sau khi thực hiện chuẩn hóa ở Chương 2, thuộc tính \texttt{MaDoi} được loại bỏ khỏi bảng này để triệt tiêu phụ thuộc bắc cầu, đồng thời cặp thuộc tính (\texttt{MaTran}, \texttt{MaCauThu}) tham chiếu trực tiếp tới khóa chính của bảng \texttt{DANG\_KY\_THI\_DAU}.
+Lưu trữ chi tiết các bàn thắng, bàn phản lưới nhà và thẻ phạt theo từng phút của cầu thủ đã đăng ký tham gia trong trận đấu. Cặp thuộc tính (\texttt{MaTran}, \texttt{MaCauThu}) tham chiếu trực tiếp tới khóa chính của bảng \texttt{DANG\_KY\_THI\_DAU} nhằm bảo đảm tính toàn vẹn nghiệp vụ.
 \begin{table}[H]
 \centering
 \small
@@ -244,7 +247,7 @@ Lưu trữ chi tiết các bàn thắng và thẻ phạt theo từng phút của
 \texttt{MaSuKien} & VARCHAR(15) & Khóa chính & Mã định danh sự kiện \\ \hline
 \texttt{MaTran} & VARCHAR(10) & Khóa ngoại kép & Trận đấu diễn ra ($\rightarrow$ \texttt{DANG\_KY\_THI\_DAU}) \\ \hline
 \texttt{MaCauThu} & VARCHAR(10) & Khóa ngoại kép & Cầu thủ thực hiện ($\rightarrow$ \texttt{DANG\_KY\_THI\_DAU}) \\ \hline
-\texttt{LoaiSuKien} & VARCHAR(20) & Bắt buộc & \texttt{'BanThang'}, \texttt{'TheVang'}, \texttt{'TheDo'} \\ \hline
+\texttt{LoaiSuKien} & VARCHAR(20) & Bắt buộc & \texttt{'BanThang'}, \texttt{'PhanLuoi'}, \texttt{'TheVang'}, \texttt{'TheDo'} \\ \hline
 \texttt{PhutGhiNhan} & INT & Bắt buộc, Từ 1 đến 120 & Phút diễn ra sự kiện \\ \hline
 \end{tabular}
 \caption{Từ điển dữ liệu bảng SU\_KIEN\_TRAN\_DAU}
@@ -281,27 +284,27 @@ Hệ thống gồm các tập thực thể và mối kết hợp sau:
     \item \textbf{Mối kết hợp \textit{Màu áo} (\texttt{DOI\_BONG} -- \texttt{MAU\_AO\_DOI\_BONG})}:
     Quan hệ $1 - N$. Một đội bóng phải đăng ký từ 2 đến 3 bộ màu áo thi đấu với bản số $(2, 3)$. Mỗi bản ghi màu áo thuộc về duy nhất một đội bóng với bản số $(1, 1)$.
     \item \textbf{Mối kết hợp \textit{Hợp đồng cầu thủ} (\texttt{CAU\_THU} -- \texttt{HOP\_DONG\_CAU\_THU} -- \texttt{DOI\_BONG})}:
-    Quan hệ $1 - N$ từ \texttt{CAU\_THU} và \texttt{DOI\_BONG} tới \texttt{HOP\_DONG\_CAU\_THU}. Mỗi cầu thủ trong mùa giải có bản số $(1, N)$ theo lịch sử hợp đồng nhưng tại một thời điểm chỉ có duy nhất một hợp đồng hiệu lực. Mỗi đội bóng đăng ký tối đa 30 cầu thủ trong mùa giải với bản số $(18, 30)$.
+    Quan hệ $1 - N$ từ \texttt{CAU\_THU} và \texttt{DOI\_BONG} tới \texttt{HOP\_DONG\_CAU\_THU}. Mỗi cầu thủ trong mùa giải có bản số $(1, N)$ theo lịch sử hợp đồng nhưng tại một thời điểm chỉ có duy nhất một hợp đồng hiệu lực. Mỗi đội bóng đăng ký danh sách cầu thủ trong mùa giải với bản số $(1, N)$ (theo quy định điều lệ giải, mỗi đội có tối thiểu 18 và tối đa 30 cầu thủ có hợp đồng hiệu lực).
     \item \textbf{Mối kết hợp \textit{Lịch thi đấu theo vòng} (\texttt{VONG\_DAU} -- \texttt{TRAN\_DAU})}:
-    Quan hệ $1 - N$. Một vòng đấu gồm đúng 3 trận đấu với bản số $(3, 3)$. Mỗi trận đấu thuộc về duy nhất một vòng đấu với bản số $(1, 1)$.
+    Quan hệ $1 - N$. Một vòng đấu có thể có một hoặc nhiều trận đấu với bản số tổng quát $(1, N)$ (cụ thể trong giải 6 đội gồm 3 trận/vòng). Mỗi trận đấu thuộc về duy nhất một vòng đấu với bản số $(1, 1)$.
     \item \textbf{Mối kết hợp \textit{Chủ nhà / Đội khách} (\texttt{DOI\_BONG} -- \texttt{TRAN\_DAU})}:
-    Hai mối kết hợp $1 - N$ độc lập ứng với vai trò đội chủ nhà và đội khách. Trong toàn mùa giải, mỗi đội bóng thi đấu 5 trận sân nhà với bản số $(5, 5)$ và 5 trận sân khách với bản số $(5, 5)$; mỗi trận đấu có đúng một đội chủ nhà $(1, 1)$ và một đội khách $(1, 1)$.
+    Hai mối kết hợp $1 - N$ độc lập ứng với vai trò đội chủ nhà và đội khách. Một đội bóng có thể tham gia nhiều trận đấu với vai trò đội chủ nhà $(0, N)$ và nhiều trận đấu với vai trò đội khách $(0, N)$; mỗi trận đấu có đúng một đội chủ nhà $(1, 1)$ và một đội khách $(1, 1)$.
     \item \textbf{Mối kết hợp \textit{Tổ chức tại sân} (\texttt{SAN\_VAN\_DONG} -- \texttt{TRAN\_DAU})}:
-    Quan hệ $1 - N$. Một sân vận động tổ chức nhiều trận đấu trong mùa giải với bản số $(0, N)$; mỗi trận đấu diễn ra tại đúng một sân vận động thực tế với bản số $(1, 1)$.
+    Quan hệ $1 - N$. Một sân vận động có thể tổ chức nhiều trận đấu trong mùa giải với bản số $(0, N)$; mỗi trận đấu diễn ra tại đúng một sân vận động thực tế với bản số $(1, 1)$.
     \item \textbf{Mối kết hợp \textit{Phân công điều khiển} (\texttt{TRAN\_DAU} -- \texttt{TRONG\_TAI})}:
-    Quan hệ $N - N$ được triển khai qua \texttt{PHAN\_CONG\_TRONG\_TAI}. Mỗi trận đấu bắt buộc có đúng 4 trọng tài tương ứng 4 vai trò với bản số $(4, 4)$. Mỗi trọng tài tham gia điều hành từ $0$ đến $N$ trận đấu trong mùa giải với bản số $(0, N)$ và tối đa 1 trận trong mỗi vòng đấu.
+    Quan hệ $N - N$ được triển khai qua thực thể kết hợp \texttt{PHAN\_CONG\_TRONG\_TAI}. Mỗi trận đấu có nhiều trọng tài được phân công điều hành với bản số $(1, N)$ (cụ thể điều lệ yêu cầu đủ 4 trọng tài); mỗi trọng tài có thể tham gia điều hành nhiều trận đấu trong mùa giải với bản số $(0, N)$ và tối đa 1 trận trong mỗi vòng đấu.
     \item \textbf{Mối kết hợp \textit{Đăng ký danh sách thi đấu} (\texttt{TRAN\_DAU} -- \texttt{CAU\_THU})}:
-    Quan hệ $N - N$ được triển khai thành thực thể kết hợp \texttt{DANG\_KY\_THI\_DAU}. Mỗi trận đấu có từ 22 đến 36 cầu thủ được hai đội đăng ký (mỗi đội từ 11 đến 18 cầu thủ, gồm 11 cầu thủ đá chính và tối đa 7 cầu thủ dự bị). Mỗi cầu thủ tham gia từ $0$ đến $10$ trận đấu trong mùa giải với bản số $(0, 10)$.
+    Quan hệ $N - N$ được triển khai thành thực thể kết hợp \texttt{DANG\_KY\_THI\_DAU}. Mỗi trận đấu có nhiều cầu thủ được hai đội đăng ký với bản số $(1, N)$ (cụ thể mỗi đội từ 11 đến 18 cầu thủ, gồm 11 cầu thủ đá chính và tối đa 7 cầu thủ dự bị). Mỗi cầu thủ có thể được đăng ký trong nhiều trận đấu suốt mùa giải với bản số $(0, N)$.
     \item \textbf{Mối kết hợp \textit{Ghi nhận sự kiện} (\texttt{DANG\_KY\_THI\_DAU} -- \texttt{SU\_KIEN\_TRAN\_DAU})}:
     Quan hệ $1 - N$. Một cầu thủ được đăng ký trong trận đấu có thể phát sinh từ $0$ đến $N$ sự kiện bàn thắng hoặc thẻ phạt với bản số $(0, N)$; mỗi sự kiện diễn biến thuộc về đúng một cầu thủ đã đăng ký trong trận đấu đó với bản số $(1, 1)$.
 \end{itemize}
 
 \subsection{Mô hình trực quan lược đồ thực thể liên kết}
-Hình~\ref{fig:er_diagram} trình bày tổng thể lược đồ thực thể liên kết chi tiết của hệ thống quản lý giải bóng đá:
+Hình~\ref{fig:er_diagram} trình bày tổng thể lược đồ thực thể liên kết mở rộng của hệ thống quản lý giải bóng đá, được trực quan hóa theo ký hiệu chân quạ (Crow's Foot notation) biểu diễn đầy đủ các tập thực thể, thuộc tính và mối quan hệ bản số giữa các bảng:
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[angle=90, width=0.7\textheight, keepaspectratio]{Figures/ERD.png}
-    \caption{Lược đồ thực thể liên kết chi tiết của hệ thống}
+	\includegraphics[angle=90, width=0.65\textheight, keepaspectratio]{Figures/ERD.png}
+    \caption{Lược đồ thực thể liên kết mở rộng (biểu diễn theo ký hiệu Crow's Foot)}
     \label{fig:er_diagram}
 \end{figure}

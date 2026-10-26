@@ -90,31 +90,48 @@ FROM TongHop;
 
 
 -- ----------------------------------------------------------------------------
--- 2. HÀM TRUY VẤN DANH SÁCH 10 CẦU THỦ GHI NHIỀU BÀN THẮNG NHẤT (VUA PHÁ LƯỚI)
+-- 2. HÀM TRUY VẤN TOP 10 CẦU THỦ GHI NHIỀU BÀN THẮNG NHẤT (VUA PHÁ LƯỚI)
+-- Lưu ý: Gom nhóm theo cầu thủ (MaCauThu, HoTen), không gom theo TenDoi để tránh
+--        bị phân tách dòng nếu cầu thủ chuyển nhượng giữa mùa. Đội bóng hiện tại
+--        được truy vấn độc lập từ hợp đồng mới nhất còn hiệu lực.
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION fn_top10_vua_pha_luoi()
 RETURNS TABLE (
     XepHang BIGINT,
     MaCauThu VARCHAR(10),
     HoTen VARCHAR(100),
-    TenDoi VARCHAR(100),
+    TenDoiHienTai VARCHAR(100),
     SoBanThang BIGINT
 )
 LANGUAGE sql
 AS $$
+    WITH BanThangCuaCauThu AS (
+        SELECT 
+            sk.MaCauThu,
+            COUNT(*) AS SoBanThang
+        FROM SU_KIEN_TRAN_DAU sk
+        WHERE sk.LoaiSuKien = 'BanThang'
+        GROUP BY sk.MaCauThu
+    ),
+    DoiBongHienTai AS (
+        SELECT DISTINCT ON (hd.MaCauThu)
+            hd.MaCauThu,
+            db.TenDoi
+        FROM HOP_DONG_CAU_THU hd
+        JOIN DOI_BONG db ON hd.MaDoiHienTai = db.MaDoi
+        WHERE hd.TrangThai IN ('ChinhThuc', 'ChoMuon')
+        ORDER BY hd.MaCauThu, hd.NgayBatDau DESC
+    )
     SELECT 
-        ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, ct.HoTen ASC) AS XepHang,
+        ROW_NUMBER() OVER (ORDER BY b.SoBanThang DESC, ct.HoTen ASC) AS XepHang,
         ct.MaCauThu,
         ct.HoTen,
-        db.TenDoi,
-        COUNT(*) AS SoBanThang
-    FROM SU_KIEN_TRAN_DAU sk
-    JOIN DANG_KY_THI_DAU dk ON sk.MaTran = dk.MaTran AND sk.MaCauThu = dk.MaCauThu
-    JOIN CAU_THU ct ON sk.MaCauThu = ct.MaCauThu
-    JOIN DOI_BONG db ON dk.MaDoi = db.MaDoi
-    WHERE sk.LoaiSuKien = 'BanThang'
-    GROUP BY ct.MaCauThu, ct.HoTen, db.TenDoi
-    ORDER BY SoBanThang DESC, ct.HoTen ASC
+        COALESCE(d.TenDoi, 'Tự do') AS TenDoiHienTai,
+        b.SoBanThang
+    FROM BanThangCuaCauThu b
+    JOIN CAU_THU ct ON b.MaCauThu = ct.MaCauThu
+    LEFT JOIN DoiBongHienTai d ON b.MaCauThu = d.MaCauThu
+    ORDER BY b.SoBanThang DESC, ct.HoTen ASC
     LIMIT 10;
 $$;
 

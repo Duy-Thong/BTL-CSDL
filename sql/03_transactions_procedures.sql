@@ -25,13 +25,14 @@ DECLARE
 BEGIN
     -- 1. Kiểm tra hai đội không được trùng nhau
     IF p_ma_doi_nha = p_ma_doi_khach THEN
-        RAISE EXCEPTION 'Lỗi giao dịch: Đội chủ nhà và đội khách không được trùng nhau!';
+        RAISE EXCEPTION 'Lỗi giao dịch: Đội chủ nhà (%) và đội khách (%) không được trùng nhau!',
+            p_ma_doi_nha, p_ma_doi_khach;
     END IF;
 
-    -- Khóa bản ghi sân vận động để ngăn chặn 2 giao dịch xếp lịch trùng giờ đồng thời trên cùng sân
+    -- Khóa bản ghi sân vận động cha (Row-level lock) để tuần tự hóa việc xếp lịch đồng thời
     PERFORM 1 FROM SAN_VAN_DONG WHERE MaSan = p_ma_san FOR NO KEY UPDATE;
 
-    -- 2. Kiểm tra thể thức vòng tròn 2 lượt: Cặp đấu này trên sân nhà này đã tồn tại chưa
+    -- 2. Kiểm tra thể thức vòng tròn: Cặp đấu này trên sân nhà này đã tồn tại chưa
     SELECT COUNT(*) INTO v_da_ton_tai
     FROM TRAN_DAU
     WHERE MaDoiNha = p_ma_doi_nha AND MaDoiKhach = p_ma_doi_khach;
@@ -94,7 +95,7 @@ BEGIN
     -- 2. Xóa phân công cũ nếu có để gán lại toàn bộ tổ trọng tài
     DELETE FROM PHAN_CONG_TRONG_TAI WHERE MaTran = p_ma_tran;
 
-    -- 3. Thêm 4 vị trí (Trigger trg_check_trong_tai_toi_da_1_tran_1_vong sẽ tự động kiểm tra vòng đấu)
+    -- 3. Thêm 4 vị trí (Trigger trg_check_phan_cong_trong_tai sẽ tự động kiểm tra vòng đấu)
     INSERT INTO PHAN_CONG_TRONG_TAI (MaTran, VaiTro, MaTrongTai) VALUES
     (p_ma_tran, 'Chinh', p_tt_chinh),
     (p_ma_tran, 'Bien1', p_tt_bien1),
@@ -106,7 +107,7 @@ $$;
 
 -- ----------------------------------------------------------------------------
 -- GIAO DỊCH 3: ĐĂNG KÝ DANH SÁCH CẦU THỦ THI ĐẤU CHO MỘT TRẬN ĐẤU
--- Đảm bảo: Cầu thủ thuộc biên chế đội bóng, gán đúng số áo đã đăng ký.
+-- Đảm bảo: Cầu thủ thuộc biên chế đội bóng vào ngày thi đấu, gán đúng số áo.
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE sp_dang_ky_cau_thu_tran(
     p_ma_tran VARCHAR(10),
@@ -118,21 +119,31 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     v_so_ao INT;
+    v_ngay_gio TIMESTAMP;
 BEGIN
-    -- 1. Kiểm tra cầu thủ có hợp đồng còn hiệu lực và đang thi đấu cho đội này không
+    -- Lấy ngày giờ diễn ra trận đấu
+    SELECT NgayGio INTO v_ngay_gio 
+    FROM TRAN_DAU 
+    WHERE MaTran = p_ma_tran;
+
+    IF v_ngay_gio IS NULL THEN
+        RAISE EXCEPTION 'Lỗi giao dịch: Không tìm thấy trận đấu %!', p_ma_tran;
+    END IF;
+
+    -- 1. Kiểm tra cầu thủ có hợp đồng còn hiệu lực tại ngày diễn ra trận đấu
     SELECT SoAo INTO v_so_ao
     FROM HOP_DONG_CAU_THU
     WHERE MaCauThu = p_ma_cau_thu
       AND MaDoiHienTai = p_ma_doi
       AND TrangThai IN ('ChinhThuc', 'ChoMuon')
-      AND CURRENT_DATE BETWEEN NgayBatDau AND NgayKetThuc;
+      AND v_ngay_gio::DATE BETWEEN NgayBatDau AND NgayKetThuc;
 
     IF v_so_ao IS NULL THEN
-        RAISE EXCEPTION 'Lỗi giao dịch: Cầu thủ % không thuộc danh sách thi đấu hợp lệ của đội bóng %!',
-            p_ma_cau_thu, p_ma_doi;
+        RAISE EXCEPTION 'Lỗi giao dịch: Cầu thủ % không có hợp đồng thi đấu hợp lệ tại đội bóng % vào ngày diễn ra trận đấu (%)!',
+            p_ma_cau_thu, p_ma_doi, v_ngay_gio::DATE;
     END IF;
 
-    -- 2. Thực hiện đăng ký (Trigger kiểm tra đăng ký sẽ khóa bản ghi trận và chặn nếu vượt giới hạn)
+    -- 2. Thực hiện đăng ký (Trigger trg_check_dang_ky_thi_dau_va_treo_gio sẽ kiểm tra 11 chính, tối đa 7 dự bị và án treo giò)
     INSERT INTO DANG_KY_THI_DAU (MaTran, MaCauThu, MaDoi, VaiTroThiDau, SoAoDangKy)
     VALUES (p_ma_tran, p_ma_cau_thu, p_ma_doi, p_vai_tro_thi_dau, v_so_ao);
 END;
@@ -192,8 +203,9 @@ $$;
 
 -- ----------------------------------------------------------------------------
 -- GIAO DỊCH 5: CHUYỂN NHƯỢNG HOẶC CHO MƯỢN CẦU THỦ
--- Đảm bảo: Kiểm tra đội mới chưa quá 30 cầu thủ, số áo mới chưa ai mang,
---          cập nhật đóng hợp đồng cũ và mở hợp đồng mới.
+-- Đảm bảo: Nếu cho mượn ('ChoMuon'), hợp đồng gốc chuyển sang 'TamDung' để bảo lưu quyền sở hữu của CLB chủ quản;
+--          nếu chuyển nhượng dứt đoạn ('ChinhThuc'), hợp đồng cũ chuyển sang 'ThanhLy'.
+--          Nhờ Partial Unique Index, không bao giờ bị văng lỗi trùng khóa.
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE sp_chuyen_nhuong_cho_muon_cau_thu(
     p_ma_hd_moi VARCHAR(10),
@@ -210,15 +222,28 @@ AS $$
 BEGIN
     -- Khóa bản ghi cầu thủ để ngăn chặn hai giao dịch chuyển nhượng đồng thời cho cùng 1 cầu thủ
     PERFORM 1 FROM CAU_THU WHERE MaCauThu = p_ma_cau_thu FOR NO KEY UPDATE;
+    PERFORM 1 FROM DOI_BONG WHERE MaDoi = p_ma_doi_moi FOR NO KEY UPDATE;
 
-    -- 1. Cập nhật ngày kết thúc của các hợp đồng đang hiệu lực trước đó về ngày bắt đầu mới - 1
-    UPDATE HOP_DONG_CAU_THU
-    SET NgayKetThuc = p_ngay_bat_dau - INTERVAL '1 day'
-    WHERE MaCauThu = p_ma_cau_thu
-      AND NgayKetThuc >= p_ngay_bat_dau;
+    -- 1. Xử lý hợp đồng cũ đang có hiệu lực của cầu thủ
+    -- Nếu cho mượn: Hợp đồng gốc tạm dừng để giữ quyền sở hữu của CLB chủ quản
+    -- Nếu chuyển nhượng chính thức: Hợp đồng cũ thanh lý
+    IF p_trang_thai = 'ChoMuon' THEN
+        UPDATE HOP_DONG_CAU_THU
+        SET TrangThai = 'TamDung'
+        WHERE MaCauThu = p_ma_cau_thu
+          AND TrangThai IN ('ChinhThuc', 'ChoMuon')
+          AND NgayKetThuc >= p_ngay_bat_dau;
+    ELSE
+        UPDATE HOP_DONG_CAU_THU
+        SET NgayKetThuc = p_ngay_bat_dau - INTERVAL '1 day',
+            TrangThai = 'ThanhLy'
+        WHERE MaCauThu = p_ma_cau_thu
+          AND TrangThai IN ('ChinhThuc', 'ChoMuon', 'TamDung')
+          AND NgayKetThuc >= p_ngay_bat_dau;
+    END IF;
 
     -- 2. Thêm bản ghi hợp đồng mới cho cầu thủ tại đội bóng mới
-    -- (Các trigger kiểm tra số áo duy nhất và giới hạn 30 cầu thủ sẽ tự động khóa đội mới và kiểm tra)
+    -- (Partial Unique Index và Trigger trg_check_hop_dong_va_so_ao sẽ đảm bảo tính hợp lệ tuyệt đối)
     INSERT INTO HOP_DONG_CAU_THU (
         MaHD, MaCauThu, MaDoiChuQuan, MaDoiHienTai, 
         SoAo, NgayBatDau, NgayKetThuc, TrangThai
